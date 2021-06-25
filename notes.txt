@@ -1,0 +1,7 @@
+CREATE TABLE public.url (
+    idx serial NOT NULL,
+    url text NOT NULL,
+    tms
+    clk
+    CONSTRAINT url_pk PRIMARY KEY (idx)
+);

@@ -1,0 +1,26 @@
+version: '3.0'
+services:
+  postgres:
+    image: postgres:13
+    volumes:
+      - ~/Dev/postgres-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=url
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=url
+  adminer:
+    image: adminer:4.8.1
+    ports:
+      - 7777:8080
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+    depends_on:
+      - postgres
+  metabase:
+    image: metabase/metabase
+    ports:
+      - 3000:3000
+    depends_on:
+      - postgres
