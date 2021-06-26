@@ -19,7 +19,7 @@ services:
     depends_on:
       - postgres
   metabase:
-    image: metabase/metabase
+    image: metabase/metabase:v0.39.4
     ports:
       - 3000:3000
     depends_on:
