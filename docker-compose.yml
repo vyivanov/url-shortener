@@ -5,7 +5,7 @@ services:
     volumes:
       - /home/vivanov/Dev/postgres-data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - 5432:5432   # TODO: remove before production
     environment:
       - POSTGRES_USER=url
       - POSTGRES_PASSWORD=test
