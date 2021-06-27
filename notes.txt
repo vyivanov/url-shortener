@@ -1,7 +1,18 @@
 CREATE TABLE public.url (
     idx serial NOT NULL,
     url text NOT NULL,
-    tms
-    clk
+    tms timestamp NOT NULL DEFAULT timezone('UTC'::text, now()),
+    ipc inet NULL,
+    cnt int NOT NULL DEFAULT 0,
     CONSTRAINT url_pk PRIMARY KEY (idx)
 );
+
+COMMENT ON COLUMN public.url.idx IS 'key to be provided to client';
+COMMENT ON COLUMN public.url.url IS 'link to be redirected to';
+COMMENT ON COLUMN public.url.tms IS 'utc timestamp the record was created at';
+COMMENT ON COLUMN public.url.ipc IS 'client ip the record was created from';
+COMMENT ON COLUMN public.url.cnt IS 'redirection counter';
+
+INSERT INTO public.url (url, ipc) VALUES('http://clck.app', '185.155.19.165');
+SELECT url FROM public.url WHERE idx = 1;
+UPDATE public.url SET cnt = cnt + 1 WHERE idx = 1;

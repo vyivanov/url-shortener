@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:13
     volumes:
-      - ~/Dev/postgres-data:/var/lib/postgresql/data
+      - /home/vivanov/Dev/postgres-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     environment:

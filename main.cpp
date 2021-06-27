@@ -21,5 +21,5 @@ int main()
             << '\n';
     }
 
-    Shortener::Application(9080).serve();
+    Shortener::Application().serve();
 }
