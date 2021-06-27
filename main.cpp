@@ -6,7 +6,7 @@
 
 int main()
 {
-    pqxx::connection db{"postgresql://url:test@localhost/url"};
+    pqxx::connection db{"postgresql://url:test@postgres/url"};
     pqxx::work wrk{db};
 
     pqxx::result res{wrk.exec("SELECT * FROM url")};

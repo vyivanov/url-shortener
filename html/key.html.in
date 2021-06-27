@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>ready</title>
+        <title>key</title>
     </head>
     <body>
         <center><a href="#">http://clck.app/{{ key }}</a></center>

@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>url</title>
+    </head>
+    <body>
+        <script>
+            document.location.href = '#{{ url }}';
+        </script>
+    </body>
+</html>

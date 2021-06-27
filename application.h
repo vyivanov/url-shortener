@@ -1,7 +1,11 @@
 #pragma once
 
 #include <pistache/router.h>
+#include <jinja2cpp/template.h>
+
 #include <mutex>
+#include <string>
+#include <optional>
 
 namespace Shortener {
 
@@ -25,6 +29,7 @@ private:
     void log(const Request& request);
 private:
     static std::optional<std::string> get_url(const Request& request);
+    static std::string render_template(const std::string& file, const jinja2::ValuesMap& attr);
 private:
     std::mutex             m_mtx;
     Pistache::Rest::Router m_router;

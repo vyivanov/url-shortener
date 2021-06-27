@@ -24,3 +24,9 @@ services:
       - 3000:3000
     depends_on:
       - postgres
+  shortener:
+    image: vyivanov/url-shortener:latest
+    ports:
+      - 80:9080
+    depends_on:
+      - postgres

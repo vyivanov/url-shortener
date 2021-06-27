@@ -1,4 +1,5 @@
 #include "application.h"
+
 #include <jinja2cpp/template.h>
 
 #include <pistache/router.h>
@@ -40,35 +41,34 @@ void Application::serve() {
 
 void Application::request_web(const Request& request, ResponseWriter response) {
     log(request);
-    if (auto url = this->get_url(request); url) {
-        jinja2::Template ready;
-        ready.LoadFromFile("../out.html.in");
-        const jinja2::ValuesMap param = {{"key", url.value()}};
-        response.send(Code::Ok, ready.RenderAsString(param).value(), MIME(Text, Html));
+    if (auto url = get_url(request); url) {
+        auto out = render_template("html/key.html.in", {{"key", url.value()}});     // TODO: url -> key
+        response.send(Code::Ok, out.c_str(), MIME(Text, Html));
     } else {
-        serveFile(response, "../web.html", MIME(Text, Html));
+        serveFile(response, "html/web.html", MIME(Text, Html));
     }
 }
 
 void Application::request_api(const Request& request, ResponseWriter response) {
     log(request);
     if (auto url = get_url(request); url) {
-        auto out = boost::format("http://clck.app/%1%") % url.value();
+        auto out = boost::format("http://clck.app/%1%") % url.value();              // TODO: url -> key
         response.send(Code::Ok, out.str(), MIME(Text, Plain));
     } else {
-        serveFile(response, "../api.html", MIME(Text, Html));
+        serveFile(response, "html/api.html", MIME(Text, Html));
     }
 }
 
 void Application::request_key(const Request& request, ResponseWriter response) {
     log(request);
-    auto id = request.param(":key").as<std::string>();
-    response.send(Code::Ok, id);
+    auto key = request.param(":key").as<std::string>();
+    auto out = render_template("html/url.html.in", {{"url", key.c_str()}});         // TODO: key -> url
+    response.send(Code::Ok, out.c_str(), MIME(Text, Html));
 }
 
 void Application::request_err(const Request& request, ResponseWriter response) {
     log(request);
-    response.send(Code::Not_Found, "req_invalid");
+    serveFile(response, "html/err.html", MIME(Text, Html));
 }
 
 void Application::log(const Request& request) {
@@ -90,6 +90,12 @@ std::optional<std::string> Application::get_url(const Request& request) {
         return request.query().get("url").get();
     }
     return std::nullopt;
+}
+
+std::string Application::render_template(const std::string& file, const jinja2::ValuesMap& attr) {
+    auto temp = jinja2::Template();
+    temp.LoadFromFile(file);
+    return temp.RenderAsString(attr).value();
 }
 
 }
