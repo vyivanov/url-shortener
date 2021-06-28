@@ -3,13 +3,14 @@ services:
   postgres:
     image: postgres:13
     volumes:
-      - /home/vivanov/Dev/postgres-data:/var/lib/postgresql/data
+      - /opt/url-shortener/postgres:/var/lib/postgresql/data
     ports:
-      - 5432:5432   # TODO: remove before production
+      - 5432:5432     # TODO: remove before production
     environment:
-      - POSTGRES_USER=url
-      - POSTGRES_PASSWORD=test
-      - POSTGRES_DB=url
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pswd
+      - POSTGRES_DB=shortener
+    restart: always
   adminer:
     image: adminer:4.8.1
     ports:
@@ -18,15 +19,18 @@ services:
       - ADMINER_DEFAULT_SERVER=postgres
     depends_on:
       - postgres
+    restart: always
   metabase:
     image: metabase/metabase:v0.39.4
     ports:
       - 3000:3000
     depends_on:
       - postgres
+    restart: always
   shortener:
     image: vyivanov/url-shortener:latest
     ports:
       - 80:9080
     depends_on:
       - postgres
+    restart: always

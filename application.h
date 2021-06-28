@@ -1,5 +1,7 @@
 #pragma once
 
+#include "database.h"
+
 #include <pistache/router.h>
 #include <jinja2cpp/template.h>
 
@@ -33,6 +35,7 @@ private:
 private:
     std::mutex             m_mtx;
     Pistache::Rest::Router m_router;
+    Database               m_db;
 };
 
 }

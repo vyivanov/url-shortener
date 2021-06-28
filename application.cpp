@@ -23,7 +23,8 @@ using Pistache::Http::Endpoint;
 using Pistache::Http::serveFile;
 using Pistache::Http::ResponseWriter;
 
-Application::Application() {
+Application::Application()
+: m_db{"postgresql://user:pswd@postgres/shortener"} {
     Get(m_router, "/"    , bind(&Application::request_web, this));
     Get(m_router, "/api" , bind(&Application::request_api, this));
     Get(m_router, "/:key", bind(&Application::request_key, this));
@@ -31,9 +32,9 @@ Application::Application() {
 }
 
 void Application::serve() {
-    auto addr = Pistache::Address(Pistache::Ipv4::any(), Pistache::Port(9080));
-    auto opts = Endpoint::options().threads(std::thread::hardware_concurrency());
-    Endpoint service(addr);
+    const auto addr = Pistache::Address{Pistache::Ipv4::any(), Pistache::Port{9080}};
+    const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency());
+    Endpoint service{addr};
     service.init(opts);
     service.setHandler(m_router.handler());
     service.serve();
@@ -41,8 +42,8 @@ void Application::serve() {
 
 void Application::request_web(const Request& request, ResponseWriter response) {
     log(request);
-    if (auto url = get_url(request); url) {
-        auto out = render_template("html/key.html.in", {{"key", url.value()}});     // TODO: url -> key
+    if (const auto url = get_url(request); url) {
+        const auto out = render_template("html/key.html.in", {{"key", url.value()}});     // TODO: url -> key
         response.send(Code::Ok, out.c_str(), MIME(Text, Html));
     } else {
         serveFile(response, "html/web.html", MIME(Text, Html));
@@ -51,8 +52,8 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 
 void Application::request_api(const Request& request, ResponseWriter response) {
     log(request);
-    if (auto url = get_url(request); url) {
-        auto out = boost::format("http://clck.app/%1%") % url.value();              // TODO: url -> key
+    if (const auto url = get_url(request); url) {
+        const auto out = boost::format("http://clck.app/%1%") % url.value();              // TODO: url -> key
         response.send(Code::Ok, out.str(), MIME(Text, Plain));
     } else {
         serveFile(response, "html/api.html", MIME(Text, Html));
@@ -61,8 +62,8 @@ void Application::request_api(const Request& request, ResponseWriter response) {
 
 void Application::request_key(const Request& request, ResponseWriter response) {
     log(request);
-    auto key = request.param(":key").as<std::string>();
-    auto out = render_template("html/url.html.in", {{"url", key.c_str()}});         // TODO: key -> url
+    const auto key = request.param(":key").as<std::string>();
+    const auto out = render_template("html/url.html.in", {{"url", key.c_str()}});         // TODO: key -> url
     response.send(Code::Ok, out.c_str(), MIME(Text, Html));
 }
 

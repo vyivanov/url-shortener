@@ -21,6 +21,8 @@ RUN \
  && cmake .. -DCMAKE_BUILD_TYPE=Debug               \
  && make -j$(nproc --all)
 
+# TODO: try to debuild
+
 FROM ubuntu:20.04
 
 WORKDIR /root
