@@ -1,3 +1,0 @@
-INSERT INTO public.item (url, ipc) VALUES('http://clck.app', '185.155.19.165');
-SELECT url FROM public.item WHERE idx = 1;
-UPDATE public.item SET cnt = cnt + 1 WHERE idx = 1;

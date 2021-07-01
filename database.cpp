@@ -1,12 +1,16 @@
 #include "database.h"
 
 #include <pqxx/pqxx>
+#include <boost/format.hpp>
+
+#include <regex>
+#include <string>
 #include <string_view>
 
 namespace Shortener {
 
-constexpr const char* SELECT_TABLE = "SELECT * FROM item";
-constexpr const char* CREATE_TABLE =
+constexpr const char* SQL_SELECT_TABLE = "SELECT * FROM public.item";
+constexpr const char* SQL_CREATE_TABLE =
 R"(
 
 CREATE TABLE public.item
@@ -27,16 +31,42 @@ COMMENT ON COLUMN public.item.cnt IS 'redirection counter';
 
 )";
 
-Database::Database(const std::string_view uri) : m_uri{uri} {
-    pqxx::connection db{m_uri};
+constexpr const char* TMPL_INSERT_ITEM = "INSERT INTO public.item (url, ipc) VALUES('%1%', '%2%') RETURNING idx";
+constexpr const char* TMPL_SEARCH_ITEM = "UPDATE public.item SET cnt = cnt + 1 WHERE idx = %1%;"
+                                         "SELECT url FROM public.item WHERE idx = %1%";
+
+Database::Database(const std::string_view uri) noexcept : m_uri{uri} {
     try {
-        pqxx::work test{db};
-        test.exec(SELECT_TABLE);
-    } catch (const pqxx::undefined_table& e) {
-        pqxx::work init{db};
-        init.exec(CREATE_TABLE);
-        init.commit();
+        do_request(SQL_SELECT_TABLE);
+    } catch (const pqxx::undefined_table&) {
+        do_request(SQL_CREATE_TABLE);
     }
+}
+
+std::string Database::insert(std::string url, const std::string_view ipc) noexcept {
+    if (std::regex_search(url, std::regex{R"(^\w+://)"}) == false) {
+        url = std::string{"http://"} + url;
+    }
+    const auto sql = boost::format{TMPL_INSERT_ITEM} % url % ipc;
+    const auto out = do_request(sql.str());
+    return std::string(out.at(0).at("idx").c_str());
+}
+
+std::string Database::search(const std::string_view key) {
+    const auto sql = boost::format{TMPL_SEARCH_ITEM} % std::string(key);
+    const auto out = do_request(sql.str());
+    if (out.empty()) {
+        throw undefined_key{"key not found"};
+    }
+    return out.at(0).at("url").c_str();
+}
+
+pqxx::result Database::do_request(const std::string_view sql) {
+    pqxx::connection database{m_uri};
+    pqxx::work request{database};
+    pqxx::result result{request.exec(sql)};
+    request.commit();
+    return result;
 }
 
 }

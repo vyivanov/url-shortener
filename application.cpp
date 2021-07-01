@@ -10,6 +10,8 @@
 
 #include <mutex>
 #include <iomanip>
+#include <string>
+#include <string_view>
 #include <optional>
 
 namespace Shortener {
@@ -22,16 +24,16 @@ using Pistache::Http::Code;
 using Pistache::Http::Endpoint;
 using Pistache::Http::serveFile;
 using Pistache::Http::ResponseWriter;
+using Pistache::Http::methodString;
 
-Application::Application()
-: m_db{"postgresql://user:pswd@postgres/shortener"} {
+Application::Application() noexcept : m_db{"postgresql://user:pswd@localhost/shortener"} {
     Get(m_router, "/"    , bind(&Application::request_web, this));
     Get(m_router, "/api" , bind(&Application::request_api, this));
     Get(m_router, "/:key", bind(&Application::request_key, this));
     NotFound(m_router    , bind(&Application::request_err, this));
 }
 
-void Application::serve() {
+void Application::serve() noexcept {
     const auto addr = Pistache::Address{Pistache::Ipv4::any(), Pistache::Port{9080}};
     const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency());
     Endpoint service{addr};
@@ -43,7 +45,7 @@ void Application::serve() {
 void Application::request_web(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
-        const auto out = render_template("html/key.html.in", {{"key", url.value()}});     // TODO: url -> key
+        const auto out = render_template("html/key.html.in", {{"key", m_db.insert(url.value(), request.address().host())}});
         response.send(Code::Ok, out.c_str(), MIME(Text, Html));
     } else {
         serveFile(response, "html/web.html", MIME(Text, Html));
@@ -53,7 +55,7 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 void Application::request_api(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
-        const auto out = boost::format("http://clck.app/%1%") % url.value();              // TODO: url -> key
+        const auto out = boost::format("http://localhost:9080/%1%") % m_db.insert(url.value(), request.address().host());
         response.send(Code::Ok, out.str(), MIME(Text, Plain));
     } else {
         serveFile(response, "html/api.html", MIME(Text, Html));
@@ -62,9 +64,13 @@ void Application::request_api(const Request& request, ResponseWriter response) {
 
 void Application::request_key(const Request& request, ResponseWriter response) {
     log(request);
-    const auto key = request.param(":key").as<std::string>();
-    const auto out = render_template("html/url.html.in", {{"url", key.c_str()}});         // TODO: key -> url
-    response.send(Code::Ok, out.c_str(), MIME(Text, Html));
+    try {
+        const auto key = request.param(":key").as<std::string>();
+        const auto out = render_template("html/url.html.in", {{"url", m_db.search(key.c_str())}});
+        response.send(Code::Ok, out.c_str(), MIME(Text, Html));
+    } catch (const Database::undefined_key&) {
+        serveFile(response, "html/err.html", MIME(Text, Html));
+    }
 }
 
 void Application::request_err(const Request& request, ResponseWriter response) {
@@ -72,20 +78,20 @@ void Application::request_err(const Request& request, ResponseWriter response) {
     serveFile(response, "html/err.html", MIME(Text, Html));
 }
 
-void Application::log(const Request& request) {
+void Application::log(const Request& request) const noexcept {
+    const auto lk = std::lock_guard{m_mtx};
     const auto ts = std::time(nullptr);
-    const auto lk = std::lock_guard(m_mtx);
-    std::clog
-        << "["
-        << std::put_time(std::gmtime(&ts), "%F %T %Z")
-        << "]""\x20"
-        << request.method()         << "\x20"
-        << request.resource()       << "\x20"
-        << request.query().as_str() << "\x20"
-        << "\n";
+    std::stringstream timestamp{};
+    timestamp << std::put_time(std::gmtime(&ts), "%F %T %Z");
+    std::fprintf(::stdout, "[%s] %s %s %s (%s)\n"           ,
+                            timestamp.str().c_str()         ,
+                            methodString(request.method())  ,
+                            request.resource().c_str()      ,
+                            request.query().as_str().c_str(),
+                            request.address().host().c_str());
 }
 
-std::optional<std::string> Application::get_url(const Request& request) {
+std::optional<std::string> Application::get_url(const Request& request) noexcept {
     if (request.query().has("url") &&
             request.query().get("url").get().empty() == false) {
         return request.query().get("url").get();
@@ -93,10 +99,10 @@ std::optional<std::string> Application::get_url(const Request& request) {
     return std::nullopt;
 }
 
-std::string Application::render_template(const std::string& file, const jinja2::ValuesMap& attr) {
-    auto temp = jinja2::Template();
-    temp.LoadFromFile(file);
-    return temp.RenderAsString(attr).value();
+std::string Application::render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept {
+    auto tmpl = jinja2::Template{};
+    tmpl.LoadFromFile(file);
+    return tmpl.RenderAsString(attr).value();
 }
 
 }
