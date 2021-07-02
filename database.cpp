@@ -5,7 +5,7 @@
 
 #include <regex>
 #include <string>
-#include <string_view>
+#include <vector>
 
 namespace Shortener {
 
@@ -35,7 +35,9 @@ constexpr const char* TMPL_INSERT_ITEM = "INSERT INTO public.item (url, ipc) VAL
 constexpr const char* TMPL_SEARCH_ITEM = "UPDATE public.item SET cnt = cnt + 1 WHERE idx = %1%;"
                                          "SELECT url FROM public.item WHERE idx = %1%";
 
-Database::Database(const std::string_view uri) noexcept : m_uri{uri} {
+constexpr const char* REGEXP_VALID_URL = R"(^(http|https|ftp)://)";
+
+Database::Database(const std::string& uri) noexcept : m_uri{uri}, m_key{"test", 3} {
     try {
         do_request(SQL_SELECT_TABLE);
     } catch (const pqxx::undefined_table&) {
@@ -43,25 +45,32 @@ Database::Database(const std::string_view uri) noexcept : m_uri{uri} {
     }
 }
 
-std::string Database::insert(std::string url, const std::string_view ipc) noexcept {
-    if (std::regex_search(url, std::regex{R"(^\w+://)"}) == false) {
+std::string Database::insert(std::string url, const std::string& ipc) noexcept {
+    if (std::regex_search(url, std::regex{REGEXP_VALID_URL}) == false) {
         url = std::string{"http://"} + url;
     }
-    const auto sql = boost::format{TMPL_INSERT_ITEM} % url % ipc;
-    const auto out = do_request(sql.str());
-    return std::string(out.at(0).at("idx").c_str());
+    const auto out = do_request((boost::format{TMPL_INSERT_ITEM} % url % ipc).str());
+    const auto idx = out.at(0).at("idx").c_str();
+    return m_key.encode(std::stoi(idx));
 }
 
-std::string Database::search(const std::string_view key) {
-    const auto sql = boost::format{TMPL_SEARCH_ITEM} % std::string(key);
-    const auto out = do_request(sql.str());
+std::string Database::search(const std::string& key) {
+    const auto idx = [&]() -> uint64_t {
+        const std::vector<uint64_t> idx = m_key.decode(key);
+        if (idx.empty()) {
+            throw undefined_key{"key not found"};
+        } else {
+            return idx.at(0);
+        }
+    }();
+    const auto out = do_request((boost::format{TMPL_SEARCH_ITEM} % idx).str());
     if (out.empty()) {
         throw undefined_key{"key not found"};
     }
     return out.at(0).at("url").c_str();
 }
 
-pqxx::result Database::do_request(const std::string_view sql) {
+pqxx::result Database::do_request(const std::string& sql) {
     pqxx::connection database{m_uri};
     pqxx::work request{database};
     pqxx::result result{request.exec(sql)};
