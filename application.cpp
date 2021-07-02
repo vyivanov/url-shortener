@@ -13,6 +13,7 @@
 #include <string>
 #include <string_view>
 #include <optional>
+#include <cstdio>
 
 namespace Shortener {
 
@@ -89,6 +90,7 @@ void Application::log(const Request& request) const noexcept {
                             request.resource().c_str()      ,
                             request.query().as_str().c_str(),
                             request.address().host().c_str());
+    std::fflush(::stdout);
 }
 
 std::optional<std::string> Application::get_url(const Request& request) noexcept {
