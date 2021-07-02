@@ -4,6 +4,6 @@
         <title>key</title>
     </head>
     <body>
-        <center><a href="http://localhost:9080/{{ key }}">http://localhost:9080/{{ key }}</a></center>
+        <center><a href="http://134.209.209.8/{{ key }}">http://134.209.209.8/{{ key }}</a></center>
     </body>
 </html>

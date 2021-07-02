@@ -4,8 +4,6 @@ services:
     image: postgres:13
     volumes:
       - /opt/url-shortener/postgres:/var/lib/postgresql/data
-    ports:
-      - 5432:5432     # TODO: remove before production
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=pswd

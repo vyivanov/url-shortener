@@ -26,7 +26,7 @@ using Pistache::Http::serveFile;
 using Pistache::Http::ResponseWriter;
 using Pistache::Http::methodString;
 
-Application::Application() noexcept : m_db{"postgresql://user:pswd@localhost/shortener"} {
+Application::Application() noexcept : m_db{"postgresql://user:pswd@postgres/shortener"} {
     Get(m_router, "/"    , bind(&Application::request_web, this));
     Get(m_router, "/api" , bind(&Application::request_api, this));
     Get(m_router, "/:key", bind(&Application::request_key, this));
@@ -55,7 +55,7 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 void Application::request_api(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
-        const auto out = boost::format("http://localhost:9080/%1%") % m_db.insert(url.value(), request.address().host());
+        const auto out = boost::format{"http://134.209.209.8/%1%"} % m_db.insert(url.value(), request.address().host());
         response.send(Code::Ok, out.str(), MIME(Text, Plain));
     } else {
         serveFile(response, "html/api.html", MIME(Text, Html));

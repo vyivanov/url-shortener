@@ -20,9 +20,10 @@ RUN \
  && cd hashidsxx/ && debuild -uc -us && cd ../          \
  && dpkg -i hashidsxx_1.0.0_amd64.deb                   \
     \
- && cd url-shortener/ && mkdir build/ && cd build/ \
- && conan install .. --build=missing               \
- && cmake .. -DCMAKE_BUILD_TYPE=Debug              \
+ && cd url-shortener/                             \
+ && mkdir build-in-docker/ && cd build-in-docker/ \
+ && conan install .. --build=missing              \
+ && cmake .. -DCMAKE_BUILD_TYPE=Debug             \
  && make -j$(nproc --all)
 
 # TODO: move to debuild
