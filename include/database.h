@@ -15,7 +15,7 @@ public:
     Database(Database&& rh) = delete;
     Database& operator=(const Database& rh) = delete;
     Database& operator=(Database&& rh) = delete;
-    std::string insert(std::string url, const std::string& ipc) noexcept;
+    std::string insert(const std::string& url, const std::string& ipc) noexcept;
     std::string search(const std::string& key);
     class undefined_key final : public std::runtime_error {
     public:

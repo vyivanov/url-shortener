@@ -6,9 +6,11 @@
 #include <pistache/endpoint.h>
 #include <pistache/http_defs.h>
 
+#include <curl/curl.h>
 #include <boost/format.hpp>
 
 #include <mutex>
+#include <regex>
 #include <iomanip>
 #include <string>
 #include <string_view>
@@ -26,6 +28,23 @@ using Pistache::Http::Endpoint;
 using Pistache::Http::serveFile;
 using Pistache::Http::ResponseWriter;
 using Pistache::Http::methodString;
+
+class CurlRAII final {
+public:
+    CurlRAII() noexcept : m_curl{curl_easy_init()} {
+        ;;;
+    }
+    CURL* handle() const noexcept {
+        return m_curl;
+    }
+   ~CurlRAII() {
+        curl_easy_cleanup(m_curl);
+    }
+private:
+    CURL* const m_curl;
+};
+
+constexpr const char* REGEXP_VALID_URL = R"(^(http|https|ftp)://)";
 
 Application::Application() noexcept : m_db{"postgresql://user:pswd@postgres/shortener"} {
     Get(m_router, "/"    , bind(&Application::request_web, this));
@@ -99,7 +118,13 @@ void Application::log(const Request& request) const noexcept {
 std::optional<std::string> Application::get_url(const Request& request) noexcept {
     if (request.query().has("url") &&
             request.query().get("url").get().empty() == false) {
-        return request.query().get("url").get();
+        const std::string inp_url = request.query().get("url").get();
+        const std::string out_url = curl_easy_unescape(CurlRAII{}.handle(), inp_url.c_str(), 0, nullptr);
+        if (std::regex_search(out_url, std::regex{REGEXP_VALID_URL})) {
+            return out_url;
+        } else {
+            return std::string{"http://"} + out_url;
+        }
     }
     return std::nullopt;
 }

@@ -3,6 +3,7 @@ pistache/cci.20201127
 libpqxx/7.5.2
 jinja2cpp/1.1.0
 rapidjson/1.1.0
+libcurl/7.77.0
 
 [generators]
 cmake
