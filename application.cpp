@@ -46,7 +46,8 @@ void Application::serve() noexcept {
 void Application::request_web(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
-        const auto out = render_template("html/key.html.in", {{"key", m_db.insert(url.value(), request.address().host())}});
+        const auto key = m_db.insert(url.value(), request.address().host());
+        const auto out = render_template("html/key.html.in", {{"key", key}});
         response.send(Code::Ok, out.c_str(), MIME(Text, Html));
     } else {
         serveFile(response, "html/web.html", MIME(Text, Html));
@@ -56,7 +57,8 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 void Application::request_api(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
-        const auto out = boost::format{"http://134.209.209.8/%1%"} % m_db.insert(url.value(), request.address().host());
+        const auto key = m_db.insert(url.value(), request.address().host());
+        const auto out = boost::format{"http://134.209.209.8/%1%"} % key;
         response.send(Code::Ok, out.str(), MIME(Text, Plain));
     } else {
         serveFile(response, "html/api.html", MIME(Text, Html));
@@ -67,7 +69,8 @@ void Application::request_key(const Request& request, ResponseWriter response) {
     log(request);
     try {
         const auto key = request.param(":key").as<std::string>();
-        const auto out = render_template("html/url.html.in", {{"url", m_db.search(key.c_str())}});
+        const auto url = m_db.search(key.c_str());
+        const auto out = render_template("html/url.html.in", {{"url", url}});
         response.send(Code::Ok, out.c_str(), MIME(Text, Html));
     } catch (const Database::undefined_key&) {
         serveFile(response, "html/err.html", MIME(Text, Html));
@@ -80,8 +83,8 @@ void Application::request_err(const Request& request, ResponseWriter response) {
 }
 
 void Application::log(const Request& request) const noexcept {
-    const auto lk = std::lock_guard{m_mtx};
     const auto ts = std::time(nullptr);
+    const auto lk = std::lock_guard{m_mtx};
     std::stringstream timestamp{};
     timestamp << std::put_time(std::gmtime(&ts), "%F %T %Z");
     std::fprintf(::stdout, "[%s] %s %s %s (%s)\n"           ,

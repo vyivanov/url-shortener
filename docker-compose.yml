@@ -25,7 +25,7 @@ services:
     depends_on:
       - postgres
     restart: always
-  shortener:
+  application:
     image: vyivanov/url-shortener:latest
     ports:
       - 80:9080
