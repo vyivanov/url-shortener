@@ -17,7 +17,12 @@ using Pistache::Http::ResponseWriter;
 
 class Application final {
 public:
-    Application() noexcept;
+    struct cfg_db {
+        std::string name;
+        std::string user;
+        std::string pswd;
+    };
+    Application(const cfg_db& db, uint16_t port) noexcept;
     Application(const Application& rh) = delete;
     Application(Application&& rh) = delete;
     Application& operator=(const Application& rh) = delete;
@@ -37,6 +42,7 @@ private:
     std::mutex mutable     m_mtx;
     Pistache::Rest::Router m_router;
     Database               m_db;
+    const Pistache::Port   m_port;
 };
 
 }

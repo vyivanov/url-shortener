@@ -48,9 +48,16 @@ private:
     CURL* const m_curl;
 };
 
+
+constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@postgres/%3%)";
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https|ftp)://)";
 
-Application::Application() noexcept : m_db{"postgresql://user:pswd@postgres/shortener"} {
+Application::Application(const cfg_db& db, const uint16_t port) noexcept
+: m_db{(boost::format{POSTGRES_CON_URI} %
+    db.user %
+    db.pswd %
+    db.name).str()}
+, m_port{Pistache::Port{port}} {
     Get(m_router, "/"           , bind(&Application::request_web, this));
     Get(m_router, "/api"        , bind(&Application::request_api, this));
     Get(m_router, "/:key"       , bind(&Application::request_key, this));
@@ -59,7 +66,7 @@ Application::Application() noexcept : m_db{"postgresql://user:pswd@postgres/shor
 }
 
 void Application::serve() noexcept {
-    const auto addr = Pistache::Address{Pistache::Ipv4::any(), Pistache::Port{9080}};
+    const auto addr = Pistache::Address{Pistache::Ipv4::any(), m_port};
     const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency());
     Endpoint service{addr};
     service.init(opts);
