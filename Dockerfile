@@ -33,6 +33,7 @@ FROM ubuntu:20.04
 
 WORKDIR /root
 COPY --from=0 /opt/url-shortener/build-in-docker/bin/url-shortener ./
+COPY --from=0 /opt/url-shortener/favicon.ico ./
 COPY --from=0 /opt/url-shortener/html ./html
 
 EXPOSE 9080

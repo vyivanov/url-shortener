@@ -34,11 +34,15 @@ public:
     CurlRAII() noexcept : m_curl{curl_easy_init()} {
         ;;;
     }
-    CURL* handle() const noexcept {
-        return m_curl;
-    }
+    CurlRAII(const CurlRAII& rh) = delete;
+    CurlRAII(CurlRAII&& rh) = delete;
+    CurlRAII& operator=(const CurlRAII& rh) = delete;
+    CurlRAII& operator=(CurlRAII&& rh) = delete;
    ~CurlRAII() {
         curl_easy_cleanup(m_curl);
+    }
+    CURL* handle() const noexcept {
+        return m_curl;
     }
 private:
     CURL* const m_curl;
@@ -47,10 +51,11 @@ private:
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https|ftp)://)";
 
 Application::Application() noexcept : m_db{"postgresql://user:pswd@postgres/shortener"} {
-    Get(m_router, "/"    , bind(&Application::request_web, this));
-    Get(m_router, "/api" , bind(&Application::request_api, this));
-    Get(m_router, "/:key", bind(&Application::request_key, this));
-    NotFound(m_router    , bind(&Application::request_err, this));
+    Get(m_router, "/"           , bind(&Application::request_web, this));
+    Get(m_router, "/api"        , bind(&Application::request_api, this));
+    Get(m_router, "/:key"       , bind(&Application::request_key, this));
+    Get(m_router, "/favicon.ico", bind(&Application::request_ico, this));
+    NotFound(m_router           , bind(&Application::request_err, this));
 }
 
 void Application::serve() noexcept {
@@ -94,6 +99,11 @@ void Application::request_key(const Request& request, ResponseWriter response) {
     } catch (const Database::undefined_key&) {
         serveFile(response, "html/err.html", MIME(Text, Html));
     }
+}
+
+void Application::request_ico(const Request& request, ResponseWriter response) {
+    log(request);
+    serveFile(response, "favicon.ico", MIME(Image, Bmp));
 }
 
 void Application::request_err(const Request& request, ResponseWriter response) {

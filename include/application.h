@@ -27,6 +27,7 @@ private:
     void request_web(const Request& request, ResponseWriter response);
     void request_api(const Request& request, ResponseWriter response);
     void request_key(const Request& request, ResponseWriter response);
+    void request_ico(const Request& request, ResponseWriter response);
     void request_err(const Request& request, ResponseWriter response);
 private:
     void log(const Request& request) const noexcept;
