@@ -34,7 +34,9 @@ constexpr const char* TMPL_INSERT_ITEM = "INSERT INTO public.item (url, ipc) VAL
 constexpr const char* TMPL_SEARCH_ITEM = "UPDATE public.item SET cnt = cnt + 1 WHERE idx = %1%;"
                                          "SELECT url FROM public.item WHERE idx = %1%";
 
-Database::Database(const std::string& uri) noexcept : m_uri{uri}, m_key{"test", 3} {
+Database::Database(const std::string& uri, const std::string& salt) noexcept
+: m_uri{uri}
+, m_key{salt, 3} {
     try {
         do_request(SQL_SELECT_TABLE);
     } catch (const pqxx::undefined_table&) {

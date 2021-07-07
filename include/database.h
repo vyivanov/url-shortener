@@ -10,7 +10,7 @@ namespace Shortener {
 
 class Database final {
 public:
-    explicit Database(const std::string& uri) noexcept;
+    Database(const std::string& uri, const std::string& salt) noexcept;
     Database(const Database& rh) = delete;
     Database(Database&& rh) = delete;
     Database& operator=(const Database& rh) = delete;

@@ -18,9 +18,10 @@ using Pistache::Http::ResponseWriter;
 class Application final {
 public:
     struct cfg_db {
-        std::string name;
         std::string user;
         std::string pswd;
+        std::string name;
+        std::string salt;
     };
     Application(const cfg_db& db, uint16_t port) noexcept;
     Application(const Application& rh) = delete;

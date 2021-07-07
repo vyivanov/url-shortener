@@ -56,7 +56,8 @@ Application::Application(const cfg_db& db, const uint16_t port) noexcept
 : m_db{(boost::format{POSTGRES_CON_URI} %
     db.user %
     db.pswd %
-    db.name).str()}
+    db.name).str(),
+    db.salt}
 , m_port{Pistache::Port{port}} {
     Get(m_router, "/"           , bind(&Application::request_web, this));
     Get(m_router, "/api"        , bind(&Application::request_api, this));
