@@ -1,3 +1,4 @@
+#include "config.h"
 #include "application.h"
 
 #include <jinja2cpp/template.h>
@@ -28,6 +29,8 @@ using Pistache::Http::Endpoint;
 using Pistache::Http::serveFile;
 using Pistache::Http::ResponseWriter;
 using Pistache::Http::methodString;
+using Pistache::Http::Header::Location;
+using Pistache::Http::Header::ContentType;
 
 class CurlRAII final {
 public:
@@ -79,10 +82,11 @@ void Application::request_web(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
         const auto key = m_db.insert(url.value(), request.address().host());
-        const auto out = render_template("html/key.html.in", {{"key", key}});
+        const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
         response.send(Code::Ok, out.c_str(), MIME(Text, Html));
     } else {
-        serveFile(response, "html/web.html", MIME(Text, Html));
+        const auto out = render_template("html/web.html.in", {{"root", APP_NAME}});
+        response.send(Code::Ok, out.c_str(), MIME(Text, Html));
     }
 }
 
@@ -90,10 +94,11 @@ void Application::request_api(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
         const auto key = m_db.insert(url.value(), request.address().host());
-        const auto out = boost::format{"http://134.209.209.8/%1%"} % key;
+        const auto out = boost::format{"http://%1%/%2%"} % APP_NAME % key;
         response.send(Code::Ok, out.str(), MIME(Text, Plain));
     } else {
-        serveFile(response, "html/api.html", MIME(Text, Html));
+        const auto out = render_template("html/api.html.in", {{"root", APP_NAME}});
+        response.send(Code::Ok, out.c_str(), MIME(Text, Html));
     }
 }
 
@@ -101,22 +106,25 @@ void Application::request_key(const Request& request, ResponseWriter response) {
     log(request);
     try {
         const auto key = request.param(":key").as<std::string>();
-        const auto url = m_db.search(key.c_str());
-        const auto out = render_template("html/url.html.in", {{"url", url}});
-        response.send(Code::Ok, out.c_str(), MIME(Text, Html));
+        const auto url = m_db.search(key);
+        response.headers().add<Location>(url);
+        response.send(Code::Moved_Permanently);
     } catch (const Database::undefined_key&) {
-        serveFile(response, "html/err.html", MIME(Text, Html));
+        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
+        response.send(Code::Not_Found, out.c_str(), MIME(Text, Html));
     }
 }
 
 void Application::request_ico(const Request& request, ResponseWriter response) {
     log(request);
-    serveFile(response, "favicon.ico", MIME(Image, Bmp));
+    response.headers().add<ContentType>("image/x-icon");
+    serveFile(response, "favicon.ico");
 }
 
 void Application::request_err(const Request& request, ResponseWriter response) {
     log(request);
-    serveFile(response, "html/err.html", MIME(Text, Html));
+    const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
+    response.send(Code::Not_Found, out.c_str(), MIME(Text, Html));
 }
 
 void Application::log(const Request& request) const noexcept {

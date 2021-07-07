@@ -2,19 +2,19 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>134.209.209.8 &mdash; url shortener</title>
+        <title>{{ root }} &mdash; url shortener</title>
     </head>
     <body>
-        <b>API</b> <a href="http://134.209.209.8">[back]</a>
+        <b>API</b> <a href="http://{{ root }}">[back]</a>
         <pre>
 This service supports API calls for automation purposes.
 
   Bash example:
-    $ curl http://134.209.209.8/api?url=example.com
+    $ curl http://{{ root }}/api?url=example.com
 
   Python example:
     1| import requests
-    2| requests.get('http://134.209.209.8/api?url=example.com').content
+    2| requests.get('http://{{ root }}/api?url=example.com').content
 
 The result is returned as plain text in response.
         </pre>
