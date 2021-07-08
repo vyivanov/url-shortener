@@ -107,8 +107,9 @@ void Application::request_key(const Request& request, ResponseWriter response) {
     try {
         const auto key = request.param(":key").as<std::string>();
         const auto url = m_db.search(key);
+        const auto out = render_template("html/url.html.in", {{"root", APP_NAME}, {"url", url}});
         response.headers().add<Location>(url);
-        response.send(Code::Moved_Permanently);
+        response.send(Code::Found, out.c_str(), MIME(Text, Html));
     } catch (const Database::undefined_key&) {
         const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
         response.send(Code::Not_Found, out.c_str(), MIME(Text, Html));
