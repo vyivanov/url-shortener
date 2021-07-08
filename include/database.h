@@ -22,7 +22,7 @@ public:
         explicit undefined_key(const char* what) noexcept : std::runtime_error{what} {;;;}
     };
 private:
-    pqxx::result do_request(const std::string& sql);
+    pqxx::result do_request(const std::string& sql) noexcept;
 private:
     const std::string        m_uri;
     const hashidsxx::Hashids m_key;

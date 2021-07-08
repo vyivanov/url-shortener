@@ -31,10 +31,18 @@ RUN \
 
 FROM ubuntu:20.04
 
+ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /root
+
 COPY --from=0 /opt/url-shortener/build-in-docker/bin/url-shortener ./
+COPY --from=0 /opt/url-shortener/entrypoint.sh ./
 COPY --from=0 /opt/url-shortener/img/favicon.ico ./
 COPY --from=0 /opt/url-shortener/html ./html
 
+RUN \
+   chmod +x entrypoint.sh \
+    \
+ && apt update && apt install -y postgresql-client
+
 EXPOSE 9080
-ENTRYPOINT ["/root/url-shortener"]
+ENTRYPOINT ["/root/entrypoint.sh"]
