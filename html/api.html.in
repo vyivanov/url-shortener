@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>{{ root }} &mdash; url shortener</title>
+        <title>{{ root }} &ndash; url shortener</title>
     </head>
     <body>
         <b>API</b> <a href="http://{{ root }}">[back]</a>
@@ -12,9 +12,10 @@ This service supports API calls for automation purposes.
   Bash example:
     $ curl http://{{ root }}/api?url=example.com
 
-  Python example:
+  Python-3 example:
     1| import requests
-    2| requests.get('http://{{ root }}/api?url=example.com').content
+    2| resp = requests.get('http://{{ root }}/api?url=example.com')
+    3| print(resp.status_code, resp.content)
 
 The result is returned as plain text in response.
         </pre>

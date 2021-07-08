@@ -2,9 +2,9 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>{{ root }} &mdash; url shortener</title>
+        <title>{{ root }} &ndash; url shortener</title>
     </head>
     <body>
-        Your short link: <a href="http://{{ root }}/{{ key }}" target="_blank">http://{{ root }}/{{ key }}</a> <a href="http://{{ root }}">[back]</a>
+        Your quick link: <a href="http://{{ root }}/{{ key }}" target="_blank">http://{{ root }}/{{ key }}</a> <a href="http://{{ root }}">[back]</a>
     </body>
 </html>

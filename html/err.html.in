@@ -2,9 +2,9 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>{{ root }} &mdash; url shortener</title>
+        <title>{{ root }} &ndash; url shortener</title>
     </head>
     <body>
-        Oops, this resource NOT FOUND <a href="http://{{ root }}">[back]</a>
+        Oops, that resource was NOT FOUND &ndash; 404 <a href="http://{{ root }}">[back]</a>
     </body>
 </html>

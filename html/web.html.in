@@ -2,13 +2,13 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>{{ root }} &mdash; url shortener</title>
+        <title>{{ root }} &ndash; url shortener</title>
     </head>
     <body>
-        <b>URL shortening application</b> <a href="http://{{ root }}/api">[API]</a>
+        <b>Quick URL Shortener</b> <a href="http://{{ root }}/api">[API]</a>
         <pre>
 <form action="" method="get">
-    <input type="text" name="url" placeholder="url to be shortened" size=35 /> <button type="submit">GO</button>
+    <input type="text" name="url" placeholder="url to be shortened quickie" size=35 /> <button type="submit">GO</button>
 </form>
         </pre>
     </body>
