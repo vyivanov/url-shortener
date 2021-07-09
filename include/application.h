@@ -10,10 +10,14 @@
 #include <string_view>
 #include <optional>
 
-namespace Shortener {
+namespace {
 
 using Pistache::Rest::Request;
 using Pistache::Http::ResponseWriter;
+
+};
+
+namespace Shortener {
 
 class Application final {
 public:
@@ -46,4 +50,4 @@ private:
     const Pistache::Port   m_port;
 };
 
-}
+};

@@ -18,7 +18,7 @@
 #include <optional>
 #include <cstdio>
 
-namespace Shortener {
+namespace {
 
 using Pistache::Rest::Request;
 using Pistache::Rest::Routes::Get;
@@ -51,9 +51,12 @@ private:
     CURL* const m_curl;
 };
 
-
 constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@postgres/%3%)";
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https|ftp)://)";
+
+};
+
+namespace Shortener {
 
 Application::Application(const cfg_db& db, const uint16_t port) noexcept
 : m_db{(boost::format{POSTGRES_CON_URI} %
@@ -81,24 +84,33 @@ void Application::serve() noexcept {
 void Application::request_web(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
-        const auto key = m_db.insert(url.value(), request.address().host());
-        const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
-        response.send(Code::Ok, out.c_str(), MIME(Text, Html));
+        try {
+            const auto key = m_db.insert(url.value(), request.address().host());
+            const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
+            response.send(Code::Ok, out, MIME(Text, Html));
+        } catch (const Database::long_url&) {
+            const auto out = render_template("html/web.html.in", {{"root", APP_NAME}});
+            response.send(Code::RequestURI_Too_Long, out, MIME(Text, Html));
+        }
     } else {
         const auto out = render_template("html/web.html.in", {{"root", APP_NAME}});
-        response.send(Code::Ok, out.c_str(), MIME(Text, Html));
+        response.send(Code::Ok, out, MIME(Text, Html));
     }
 }
 
 void Application::request_api(const Request& request, ResponseWriter response) {
     log(request);
     if (const auto url = get_url(request); url) {
-        const auto key = m_db.insert(url.value(), request.address().host());
-        const auto out = boost::format{"http://%1%/%2%"} % APP_NAME % key;
-        response.send(Code::Ok, out.str(), MIME(Text, Plain));
+        try {
+            const auto key = m_db.insert(url.value(), request.address().host());
+            const auto out = boost::format{"http://%1%/%2%"} % APP_NAME % key;
+            response.send(Code::Ok, out.str(), MIME(Text, Plain));
+        } catch (Database::long_url&) {
+            response.send(Code::RequestURI_Too_Long, "url is too long", MIME(Text, Plain));
+        }
     } else {
         const auto out = render_template("html/api.html.in", {{"root", APP_NAME}});
-        response.send(Code::Ok, out.c_str(), MIME(Text, Html));
+        response.send(Code::Ok, out, MIME(Text, Html));
     }
 }
 
@@ -109,10 +121,10 @@ void Application::request_key(const Request& request, ResponseWriter response) {
         const auto url = m_db.search(key);
         const auto out = render_template("html/url.html.in", {{"root", APP_NAME}, {"url", url}});
         response.headers().add<Location>(url);
-        response.send(Code::Found, out.c_str(), MIME(Text, Html));
+        response.send(Code::Found, out, MIME(Text, Html));
     } catch (const Database::undefined_key&) {
         const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
-        response.send(Code::Not_Found, out.c_str(), MIME(Text, Html));
+        response.send(Code::Not_Found, out, MIME(Text, Html));
     }
 }
 
@@ -125,7 +137,7 @@ void Application::request_ico(const Request& request, ResponseWriter response) {
 void Application::request_err(const Request& request, ResponseWriter response) {
     log(request);
     const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
-    response.send(Code::Not_Found, out.c_str(), MIME(Text, Html));
+    response.send(Code::Not_Found, out, MIME(Text, Html));
 }
 
 void Application::log(const Request& request) const noexcept {
@@ -162,4 +174,4 @@ std::string Application::render_template(const std::string& file, const jinja2::
     return tmpl.RenderAsString(attr).value();
 }
 
-}
+};
