@@ -1,20 +1,18 @@
 #include "config.h"
 #include "application.h"
 
-#include <jinja2cpp/template.h>
-
 #include <pistache/router.h>
 #include <pistache/endpoint.h>
 #include <pistache/http_defs.h>
 
+#include <plog/Log.h>
 #include <curl/curl.h>
 #include <boost/format.hpp>
+#include <jinja2cpp/template.h>
 
-#include <mutex>
 #include <regex>
 #include <iomanip>
 #include <string>
-#include <string_view>
 #include <optional>
 #include <cstdio>
 
@@ -56,6 +54,12 @@ constexpr const char* REGEXP_VALID_URL = R"(^(http|https|ftp)://)";
 
 };
 
+#define APP_LOG(request) \
+    PLOG_INFO.printf("%s %s %s %s", methodString(request.method()), \
+                                    request.resource().c_str(), \
+                                    request.query().as_str().c_str(), \
+                                    request.address().host().c_str())
+
 namespace Shortener {
 
 Application::Application(const cfg_db& db, const uint16_t port) noexcept
@@ -82,7 +86,7 @@ void Application::serve() noexcept {
 }
 
 void Application::request_web(const Request& request, ResponseWriter response) {
-    log(request);
+    APP_LOG(request);
     if (const auto url = get_url(request); url) {
         try {
             const auto key = m_db.insert(url.value(), request.address().host());
@@ -99,7 +103,7 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_api(const Request& request, ResponseWriter response) {
-    log(request);
+    APP_LOG(request);
     if (const auto url = get_url(request); url) {
         try {
             const auto key = m_db.insert(url.value(), request.address().host());
@@ -115,7 +119,7 @@ void Application::request_api(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_key(const Request& request, ResponseWriter response) {
-    log(request);
+    APP_LOG(request);
     try {
         const auto key = request.param(":key").as<std::string>();
         const auto url = m_db.search(key);
@@ -129,29 +133,15 @@ void Application::request_key(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_ico(const Request& request, ResponseWriter response) {
-    log(request);
+    APP_LOG(request);
     response.headers().add<ContentType>("image/x-icon");
     serveFile(response, "favicon.ico");
 }
 
 void Application::request_err(const Request& request, ResponseWriter response) {
-    log(request);
+    APP_LOG(request);
     const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
     response.send(Code::Not_Found, out, MIME(Text, Html));
-}
-
-void Application::log(const Request& request) const noexcept {
-    const auto ts = std::time(nullptr);
-    const auto lk = std::lock_guard{m_mtx};
-    std::stringstream timestamp{};
-    timestamp << std::put_time(std::gmtime(&ts), "%F %T %Z");
-    std::fprintf(::stdout, "[%s] %s %s %s (%s)\n"           ,
-                            timestamp.str().c_str()         ,
-                            methodString(request.method())  ,
-                            request.resource().c_str()      ,
-                            request.query().as_str().c_str(),
-                            request.address().host().c_str());
-    std::fflush(::stdout);
 }
 
 std::optional<std::string> Application::get_url(const Request& request) noexcept {

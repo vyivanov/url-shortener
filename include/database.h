@@ -32,4 +32,4 @@ private:
     const hashidsxx::Hashids m_key;
 };
 
-}
+};

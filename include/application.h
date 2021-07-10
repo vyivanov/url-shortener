@@ -5,9 +5,7 @@
 #include <pistache/router.h>
 #include <jinja2cpp/template.h>
 
-#include <mutex>
 #include <string>
-#include <string_view>
 #include <optional>
 
 namespace {
@@ -40,11 +38,9 @@ private:
     void request_ico(const Request& request, ResponseWriter response);
     void request_err(const Request& request, ResponseWriter response);
 private:
-    void log(const Request& request) const noexcept;
     static std::optional<std::string> get_url(const Request& request) noexcept;
     static std::string render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept;
 private:
-    std::mutex mutable     m_mtx;
     Pistache::Rest::Router m_router;
     Database               m_db;
     const Pistache::Port   m_port;
