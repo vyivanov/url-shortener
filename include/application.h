@@ -43,7 +43,7 @@ private:
 private:
     Pistache::Rest::Router m_router;
     Database               m_db;
-    const Pistache::Port   m_port;
+    Pistache::Port const   m_port;
 };
 
 };

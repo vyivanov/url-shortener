@@ -18,6 +18,25 @@
 
 namespace {
 
+class CurlUnescape final {
+public:
+    explicit CurlUnescape(const std::string& url) noexcept
+        : m_url{::curl_easy_unescape(nullptr, url.c_str(), 0, nullptr)} {
+    }
+    CurlUnescape(const CurlUnescape& rh) = delete;
+    CurlUnescape(CurlUnescape&& rh) = delete;
+    CurlUnescape& operator=(const CurlUnescape& rh) = delete;
+    CurlUnescape& operator=(CurlUnescape&& rh) = delete;
+   ~CurlUnescape() {
+        ::curl_free((void*)m_url);
+    }
+    std::string operator()() const noexcept {
+        return std::string{m_url};
+    }
+private:
+    const char* const m_url;
+};
+
 using Pistache::Rest::Request;
 using Pistache::Rest::Routes::Get;
 using Pistache::Rest::Routes::NotFound;
@@ -30,35 +49,16 @@ using Pistache::Http::methodString;
 using Pistache::Http::Header::Location;
 using Pistache::Http::Header::ContentType;
 
-class CurlRAII final {
-public:
-    CurlRAII() noexcept : m_curl{curl_easy_init()} {
-        ;;;
-    }
-    CurlRAII(const CurlRAII& rh) = delete;
-    CurlRAII(CurlRAII&& rh) = delete;
-    CurlRAII& operator=(const CurlRAII& rh) = delete;
-    CurlRAII& operator=(CurlRAII&& rh) = delete;
-   ~CurlRAII() {
-        curl_easy_cleanup(m_curl);
-    }
-    CURL* handle() const noexcept {
-        return m_curl;
-    }
-private:
-    CURL* const m_curl;
-};
-
 constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@postgres/%3%)";
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https|ftp)://)";
 
 };
 
-#define APP_LOG(request) \
-    PLOG_INFO.printf("%s %s %s %s", methodString(request.method()), \
-                                    request.resource().c_str(), \
-                                    request.query().as_str().c_str(), \
-                                    request.address().host().c_str())
+#define ROUTE_LOG(request) \
+    PLOG_INFO << request.method()         << '\x20' \
+              << request.resource()       << '\x20' \
+              << request.query().as_str() << '\x20' \
+              << request.address().host()
 
 namespace Shortener {
 
@@ -78,7 +78,7 @@ Application::Application(const cfg_db& db, const uint16_t port) noexcept
 
 void Application::serve() noexcept {
     const auto addr = Pistache::Address{Pistache::Ipv4::any(), m_port};
-    const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency());
+    const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency() << 1);
     Endpoint service{addr};
     service.init(opts);
     service.setHandler(m_router.handler());
@@ -86,7 +86,7 @@ void Application::serve() noexcept {
 }
 
 void Application::request_web(const Request& request, ResponseWriter response) {
-    APP_LOG(request);
+    ROUTE_LOG(request);
     if (const auto url = get_url(request); url) {
         try {
             const auto key = m_db.insert(url.value(), request.address().host());
@@ -103,7 +103,7 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_api(const Request& request, ResponseWriter response) {
-    APP_LOG(request);
+    ROUTE_LOG(request);
     if (const auto url = get_url(request); url) {
         try {
             const auto key = m_db.insert(url.value(), request.address().host());
@@ -119,7 +119,7 @@ void Application::request_api(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_key(const Request& request, ResponseWriter response) {
-    APP_LOG(request);
+    ROUTE_LOG(request);
     try {
         const auto key = request.param(":key").as<std::string>();
         const auto url = m_db.search(key);
@@ -133,13 +133,13 @@ void Application::request_key(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_ico(const Request& request, ResponseWriter response) {
-    APP_LOG(request);
+    ROUTE_LOG(request);
     response.headers().add<ContentType>("image/x-icon");
     serveFile(response, "favicon.ico");
 }
 
 void Application::request_err(const Request& request, ResponseWriter response) {
-    APP_LOG(request);
+    ROUTE_LOG(request);
     const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
     response.send(Code::Not_Found, out, MIME(Text, Html));
 }
@@ -148,7 +148,7 @@ std::optional<std::string> Application::get_url(const Request& request) noexcept
     if (request.query().has("url") &&
             request.query().get("url").get().empty() == false) {
         const std::string inp_url = request.query().get("url").get();
-        const std::string out_url = curl_easy_unescape(CurlRAII{}.handle(), inp_url.c_str(), 0, nullptr);
+        const std::string out_url = CurlUnescape{inp_url}();
         if (std::regex_search(out_url, std::regex{REGEXP_VALID_URL})) {
             return out_url;
         } else {
