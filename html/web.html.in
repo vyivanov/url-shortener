@@ -2,16 +2,21 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>{{ root }} &ndash; url shortener</title>
+        <title>{{ root }} &ndash; quick url shortener</title>
     </head>
     <body>
         <b>Quick URL Shortener</b> <a href="http://{{ root }}/api">[API]</a>
         <pre>
 <form action="" method="get">
-    <input type="text" name="url" placeholder="url to be shortened quickie" size=35 /> <button type="submit">GO</button>
+    <input type="text" name="url" placeholder="url to be shortened quickie" size=50 /> <button type="submit">GO</button>
 </form>
-<p>The service does not accept too long links (more than one thousand symbols).
-If you faced with service abusing, please contact to inbox@vova-ivanov.info, 2021
+
+The service does not accept too long links (more than one thousand symbols).
+If you faced with service abusing, please contact to <a href="https://www.vova-ivanov.info" target="_blank">inbox@vova-ivanov.info</a>.
+
+Have fun and be cool...
+
+[serves from 2021 &ndash; ver. {{ semver }}]
         </pre>
     </body>
 </html>

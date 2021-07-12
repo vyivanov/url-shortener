@@ -50,7 +50,7 @@ using Pistache::Http::Header::Location;
 using Pistache::Http::Header::ContentType;
 
 constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@postgres/%3%)";
-constexpr const char* REGEXP_VALID_URL = R"(^(http|https|ftp)://)";
+constexpr const char* REGEXP_VALID_URL = R"(^(http|https)://)";
 
 };
 
@@ -93,11 +93,11 @@ void Application::request_web(const Request& request, ResponseWriter response) {
             const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
             response.send(Code::Ok, out, MIME(Text, Html));
         } catch (const Database::long_url&) {
-            const auto out = render_template("html/web.html.in", {{"root", APP_NAME}});
+            const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "url is too long"}});
             response.send(Code::RequestURI_Too_Long, out, MIME(Text, Html));
         }
     } else {
-        const auto out = render_template("html/web.html.in", {{"root", APP_NAME}});
+        const auto out = render_template("html/web.html.in", {{"root", APP_NAME}, {"semver", APP_SEMVER}});
         response.send(Code::Ok, out, MIME(Text, Html));
     }
 }
@@ -127,7 +127,7 @@ void Application::request_key(const Request& request, ResponseWriter response) {
         response.headers().add<Location>(url);
         response.send(Code::Found, out, MIME(Text, Html));
     } catch (const Database::undefined_key&) {
-        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
+        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
         response.send(Code::Not_Found, out, MIME(Text, Html));
     }
 }
@@ -140,7 +140,7 @@ void Application::request_ico(const Request& request, ResponseWriter response) {
 
 void Application::request_err(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
-    const auto out = render_template("html/err.html.in", {{"root", APP_NAME}});
+    const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
     response.send(Code::Not_Found, out, MIME(Text, Html));
 }
 

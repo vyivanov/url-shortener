@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>{{ root }} &ndash; url shortener</title>
+        <title>{{ root }} &ndash; quick url shortener</title>
     </head>
     <body>
         <b>API</b> <a href="http://{{ root }}">[back]</a>
@@ -10,7 +10,7 @@
 This service supports API calls for automation purposes.
 
   <b>Bash example</b>:
-    $ curl http://{{ root }}/api?url=example.com
+    $ curl -X GET 'http://{{ root }}/api?url=example.com'
 
   <b>Python-3 example</b>:
     1| import requests
