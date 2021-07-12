@@ -10,7 +10,7 @@
 <form action="" method="get">
     <input type="text" name="url" placeholder="url to be shortened quickie" size=35 /> <button type="submit">GO</button>
 </form>
-<p>The service does not accept too long links.
+<p>The service does not accept too long links (more than one thousand symbols).
 If you faced with service abusing, please contact to inbox@vova-ivanov.info, 2021
         </pre>
     </body>

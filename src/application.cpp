@@ -87,7 +87,7 @@ void Application::serve() noexcept {
 
 void Application::request_web(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
-    if (const auto url = get_url(request); url) {
+    if (const auto url = get_url(request); url.has_value()) {
         try {
             const auto key = m_db.insert(url.value(), request.address().host());
             const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
@@ -104,7 +104,7 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 
 void Application::request_api(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
-    if (const auto url = get_url(request); url) {
+    if (const auto url = get_url(request); url.has_value()) {
         try {
             const auto key = m_db.insert(url.value(), request.address().host());
             const auto out = boost::format{"http://%1%/%2%"} % APP_NAME % key;

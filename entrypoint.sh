@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 
-user=${POSTGRES_USER}
-pswd=${POSTGRES_PASSWORD}
-  db=${POSTGRES_DB}
+readonly USER=${POSTGRES_USER}
+readonly PSWD=${POSTGRES_PASSWORD}
+readonly   DB=${POSTGRES_DB}
 
-if [ -z ${user} ] || [ -z ${pswd} ] || [ -z ${db} ]; then
+if [ -z "${USER}" ] || [ -z "${PSWD}" ] || [ -z "${DB}" ]; then
     exit 42
 fi
 
-out=$(psql postgresql://${user}:${pswd}@postgres/${db} --command 'SELECT * FROM public.item LIMIT 1' 2>&1 /dev/null)
+out=$(psql "postgresql://${USER}:${PSWD}@postgres/${DB}" --command 'SELECT idx FROM public.item LIMIT 1' 2>&1 /dev/null)
 nok=$(echo "${out}" | grep 'does not exist')
 
 if [[ ${nok} ]]; then
-    psql postgresql://${user}:${pswd}@postgres/${db} << EOF
+    psql "postgresql://${USER}:${PSWD}@postgres/${DB}" << EOF
 
 CREATE TABLE public.item
 (

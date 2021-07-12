@@ -5,6 +5,8 @@
 
 #include <string>
 #include <stdexcept>
+#include <mutex>
+#include <optional>
 
 namespace Shortener {
 
@@ -26,10 +28,11 @@ public:
         explicit undefined_key(const char* what) noexcept : std::runtime_error{what} {;;;}
     };
 private:
-    pqxx::result do_request(const std::string& sql) noexcept;
+    std::optional<pqxx::row> do_request(const std::string& sql) noexcept;
 private:
-    const std::string        m_uri;
-    const hashidsxx::Hashids m_key;
+    std::string const        m_uri;
+    hashidsxx::Hashids const m_key;
+    std::mutex               m_mtx;
 };
 
 };

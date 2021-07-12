@@ -5,12 +5,15 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
+#include <optional>
 
 namespace {
 
-constexpr const char* TMPL_INSERT_ITEM = "INSERT INTO public.item (url, ipc) VALUES('%1%', '%2%') RETURNING idx";
-constexpr const char* TMPL_SEARCH_ITEM = "UPDATE public.item SET cnt = cnt + 1 WHERE idx = %1%;"
-                                         "SELECT url FROM public.item WHERE idx = %1%";
+constexpr const char* TMPL_SEARCH_URL = "SELECT idx FROM public.item WHERE url = '%1%' LIMIT 1";
+constexpr const char* TMPL_INSERT_URL = "INSERT INTO public.item (url, ipc) VALUES('%1%', '%2%') RETURNING idx";
+constexpr const char* TMPL_SEARCH_IDX = "SELECT url FROM public.item WHERE idx = %1%";
+constexpr const char* TMPL_UPDATE_CNT = "UPDATE public.item SET cnt = cnt + 1 WHERE idx = %1%";
 
 constexpr uint32_t MAX_URL_LENGTH = 1'024UL;
 
@@ -18,16 +21,25 @@ constexpr uint32_t MAX_URL_LENGTH = 1'024UL;
 
 namespace Shortener {
 
-Database::Database(const std::string& uri, const std::string& salt) noexcept : m_uri{uri}, m_key{salt, 3} {
-    ;;;
+Database::Database(const std::string& uri, const std::string& salt) noexcept
+    : m_uri{uri}
+    , m_key{salt, 3} {
 }
 
 std::string Database::insert(const std::string& url, const std::string& ipc) {
     if (url.length() > MAX_URL_LENGTH) {
         throw long_url{"url is too long"};
     }
-    const auto out = do_request((boost::format{TMPL_INSERT_ITEM} % url % ipc).str());
-    const auto idx = out.at(0).at("idx").c_str();
+    const auto idx = [&]() -> std::string {
+        std::lock_guard lg{m_mtx};
+        const auto search_url = boost::format{TMPL_SEARCH_URL} % url;
+        if (const auto out = do_request(search_url.str()); out.has_value()) {
+            return out.value().at("idx").c_str();
+        }
+        const auto insert_url = boost::format{TMPL_INSERT_URL} % url % ipc;
+        const auto out = do_request(insert_url.str());
+        return out.value().at("idx").c_str();
+    }();
     return m_key.encode(std::stoi(idx));
 }
 
@@ -40,19 +52,27 @@ std::string Database::search(const std::string& key) {
             return idx.at(0);
         }
     }();
-    const auto out = do_request((boost::format{TMPL_SEARCH_ITEM} % idx).str());
-    if (out.empty()) {
+    std::lock_guard lg{m_mtx};
+    const auto search_idx = boost::format{TMPL_SEARCH_IDX} % idx;
+    if (const auto out = do_request(search_idx.str()); out.has_value()) {
+        const auto update_cnt = boost::format{TMPL_UPDATE_CNT} % idx;
+        do_request(update_cnt.str());
+        return out.value().at("url").c_str();
+    } else {
         throw undefined_key{"key not found"};
     }
-    return out.at(0).at("url").c_str();
 }
 
-pqxx::result Database::do_request(const std::string& sql) noexcept {
+std::optional<pqxx::row> Database::do_request(const std::string& sql) noexcept {
     pqxx::connection database{m_uri};
     pqxx::work request{database};
     pqxx::result result{request.exec(sql)};
     request.commit();
-    return result;
+    if (result.empty()) {
+        return std::nullopt;
+    } else {
+        return result.at(0);
+    }
 }
 
 };

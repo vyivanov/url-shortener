@@ -9,10 +9,10 @@
         <pre>
 This service supports API calls for automation purposes.
 
-  Bash example:
+  <b>Bash example</b>:
     $ curl http://{{ root }}/api?url=example.com
 
-  Python-3 example:
+  <b>Python-3 example</b>:
     1| import requests
     2| resp = requests.get('http://{{ root }}/api?url=example.com')
     3| print(resp.status_code, resp.content)
