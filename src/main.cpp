@@ -40,5 +40,5 @@ int main(int argc, const char** argv) {
         .salt = db_salt,
     };
     PLOG_INFO << "starting application service...";
-    Shortener::Application{cfg_db, 9080}.serve();
+    Shortener::Application{cfg_db, 80}.serve();
 }

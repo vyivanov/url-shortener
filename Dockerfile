@@ -46,5 +46,5 @@ RUN \
     \
  && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 9080
+EXPOSE 80
 ENTRYPOINT ["/root/entrypoint.sh"]
