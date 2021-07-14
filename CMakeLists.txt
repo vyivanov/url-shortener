@@ -19,7 +19,8 @@ configure_file(
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/application.cpp
-    src/postgres.cpp)
+    src/postgres.cpp
+    src/database.cpp)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -std=c++17)
 target_include_directories(${PROJECT_NAME} PRIVATE include/)

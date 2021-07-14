@@ -19,9 +19,9 @@ services:
       - postgres
     restart: always
   application:
-    image: vyivanov/url-shortener:0.0.10
+    image: vyivanov/url-shortener:0.0.11
     ports:
-      - 80:80
+      - 80:9080
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

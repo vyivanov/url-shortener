@@ -15,23 +15,12 @@ constexpr const char* TMPL_INSERT_URL = "INSERT INTO public.item (url, ipc) VALU
 constexpr const char* TMPL_SEARCH_IDX = "SELECT url FROM public.item WHERE idx = %1%";
 constexpr const char* TMPL_UPDATE_CNT = "UPDATE public.item SET cnt = cnt + 1 WHERE idx = %1%";
 
-constexpr uint32_t MAX_URL_LENGTH = 1'024UL;
-
 };
 
 namespace Shortener {
 
-Postgres::Postgres(const std::string& uri, const std::string& salt) noexcept
-    : m_uri{uri}
-    , m_key{salt, 3} {
-}
-
-std::string Postgres::insert(const std::string& url, const std::string& ipc) {
-    if (url.length() > MAX_URL_LENGTH) {
-        throw long_url{"url is too long"};
-    }
+uint64_t Postgres::do_insert(const std::string& url, const std::string& ipc) {
     const auto idx = [&]() -> std::string {
-        std::lock_guard lg{m_mtx};
         const auto search_url = boost::format{TMPL_SEARCH_URL} % url;
         if (const auto out = do_request(search_url.str()); out.has_value()) {
             return out.value().at("idx").c_str();
@@ -40,19 +29,10 @@ std::string Postgres::insert(const std::string& url, const std::string& ipc) {
         const auto out = do_request(insert_url.str());
         return out.value().at("idx").c_str();
     }();
-    return m_key.encode(std::stoi(idx));
+    return std::stoi(idx);
 }
 
-std::string Postgres::search(const std::string& key) {
-    const auto idx = [&]() -> uint64_t {
-        const std::vector<uint64_t> idx = m_key.decode(key);
-        if (idx.empty()) {
-            throw undefined_key{"key not found"};
-        } else {
-            return idx.at(0);
-        }
-    }();
-    std::lock_guard lg{m_mtx};
+std::string Postgres::do_search(const uint64_t idx) {
     const auto search_idx = boost::format{TMPL_SEARCH_IDX} % idx;
     if (const auto out = do_request(search_idx.str()); out.has_value()) {
         const auto update_cnt = boost::format{TMPL_UPDATE_CNT} % idx;

@@ -13,6 +13,7 @@ namespace {
 
 constexpr uint64_t LOG_FILE_SIZE = 10 * 1024 * 1024;
 constexpr uint64_t LOG_FILE_NUMS = 10;
+constexpr uint16_t APP_PORT      = 9080;
 
 };
 
@@ -29,9 +30,8 @@ int main(int argc, const char** argv) {
             db_pswd == nullptr ||
                 db_name == nullptr ||
                     db_salt == nullptr) {
-        constexpr const char* fatal_msg = "bad database config";
-        PLOG_FATAL << fatal_msg;
-        throw std::runtime_error{fatal_msg};
+        PLOG_FATAL << "bad database config";
+        throw std::runtime_error{"bad database config"};
     }
     const auto cfg_db = Shortener::Application::cfg_db{
         .user = db_user,
@@ -39,6 +39,6 @@ int main(int argc, const char** argv) {
         .name = db_name,
         .salt = db_salt,
     };
-    PLOG_INFO << "starting application service...";
-    Shortener::Application{cfg_db, 80}.serve();
+    PLOG_INFO.printf("starting service on %u port...", APP_PORT);
+    Shortener::Application{cfg_db, APP_PORT}.serve();
 }
