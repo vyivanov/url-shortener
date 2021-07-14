@@ -1,4 +1,4 @@
-#include "database.h"
+#include "postgres.h"
 
 #include <pqxx/pqxx>
 #include <boost/format.hpp>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "database.h"
+#include "postgres.h"
 
 #include <pistache/router.h>
 #include <jinja2cpp/template.h>
