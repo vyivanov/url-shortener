@@ -92,7 +92,7 @@ void Application::request_web(const Request& request, ResponseWriter response) {
             const auto key = m_db.insert(url.value(), request.address().host());
             const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
             response.send(Code::Ok, out, MIME(Text, Html));
-        } catch (const Database::long_url&) {
+        } catch (const Postgres::long_url&) {
             const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "url is too long"}});
             response.send(Code::RequestURI_Too_Long, out, MIME(Text, Html));
         }
@@ -109,7 +109,7 @@ void Application::request_api(const Request& request, ResponseWriter response) {
             const auto key = m_db.insert(url.value(), request.address().host());
             const auto out = boost::format{"http://%1%/%2%"} % APP_NAME % key;
             response.send(Code::Ok, out.str(), MIME(Text, Plain));
-        } catch (Database::long_url&) {
+        } catch (const Postgres::long_url&) {
             response.send(Code::RequestURI_Too_Long, "url is too long", MIME(Text, Plain));
         }
     } else {
@@ -126,7 +126,7 @@ void Application::request_key(const Request& request, ResponseWriter response) {
         const auto out = render_template("html/url.html.in", {{"root", APP_NAME}, {"url", url}});
         response.headers().add<Location>(url);
         response.send(Code::Found, out, MIME(Text, Html));
-    } catch (const Database::undefined_key&) {
+    } catch (const Postgres::undefined_key&) {
         const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
         response.send(Code::Not_Found, out, MIME(Text, Html));
     }

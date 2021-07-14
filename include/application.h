@@ -42,7 +42,7 @@ private:
     static std::string render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept;
 private:
     Pistache::Rest::Router m_router;
-    Database               m_db;
+    Postgres               m_db;
     Pistache::Port const   m_port;
 };
 

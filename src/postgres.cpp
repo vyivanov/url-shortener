@@ -21,12 +21,12 @@ constexpr uint32_t MAX_URL_LENGTH = 1'024UL;
 
 namespace Shortener {
 
-Database::Database(const std::string& uri, const std::string& salt) noexcept
+Postgres::Postgres(const std::string& uri, const std::string& salt) noexcept
     : m_uri{uri}
     , m_key{salt, 3} {
 }
 
-std::string Database::insert(const std::string& url, const std::string& ipc) {
+std::string Postgres::insert(const std::string& url, const std::string& ipc) {
     if (url.length() > MAX_URL_LENGTH) {
         throw long_url{"url is too long"};
     }
@@ -43,7 +43,7 @@ std::string Database::insert(const std::string& url, const std::string& ipc) {
     return m_key.encode(std::stoi(idx));
 }
 
-std::string Database::search(const std::string& key) {
+std::string Postgres::search(const std::string& key) {
     const auto idx = [&]() -> uint64_t {
         const std::vector<uint64_t> idx = m_key.decode(key);
         if (idx.empty()) {
@@ -63,7 +63,7 @@ std::string Database::search(const std::string& key) {
     }
 }
 
-std::optional<pqxx::row> Database::do_request(const std::string& sql) noexcept {
+std::optional<pqxx::row> Postgres::do_request(const std::string& sql) noexcept {
     pqxx::connection database{m_uri};
     pqxx::work request{database};
     pqxx::result result{request.exec(sql)};

@@ -10,13 +10,13 @@
 
 namespace Shortener {
 
-class Database final {
+class Postgres final {
 public:
-    Database(const std::string& uri, const std::string& salt) noexcept;
-    Database(const Database& rh) = delete;
-    Database(Database&& rh) = delete;
-    Database& operator=(const Database& rh) = delete;
-    Database& operator=(Database&& rh) = delete;
+    Postgres(const std::string& uri, const std::string& salt) noexcept;
+    Postgres(const Postgres& rh) = delete;
+    Postgres(Postgres&& rh) = delete;
+    Postgres& operator=(const Postgres& rh) = delete;
+    Postgres& operator=(Postgres&& rh) = delete;
     std::string insert(const std::string& url, const std::string& ipc);
     std::string search(const std::string& key);
     class long_url final : public std::runtime_error {
