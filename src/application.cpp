@@ -73,6 +73,7 @@ Application::Application(const cfg_db& db, const uint16_t port) noexcept
     Get(m_router, "/api"        , bind(&Application::request_api, this));
     Get(m_router, "/:key"       , bind(&Application::request_key, this));
     Get(m_router, "/favicon.ico", bind(&Application::request_ico, this));
+    Get(m_router, "/api/check"  , bind(&Application::request_chk, this));
     NotFound(m_router           , bind(&Application::request_err, this));
 }
 
@@ -136,6 +137,15 @@ void Application::request_ico(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     response.headers().add<ContentType>("image/x-icon");
     serveFile(response, "favicon.ico");
+}
+
+void Application::request_chk(const Request& request, ResponseWriter response) {
+    ROUTE_LOG(request);
+    if (m_db.check()) {
+        response.send(Code::Ok, "I'm alive!", MIME(Text, Plain));
+    } else {
+        response.send(Code::Internal_Server_Error, "Bad news...", MIME(Text, Plain));
+    }
 }
 
 void Application::request_err(const Request& request, ResponseWriter response) {

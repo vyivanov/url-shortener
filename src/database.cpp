@@ -11,6 +11,11 @@ constexpr uint16_t MAX_URL_LENGTH = 1'024UL;
 
 namespace Shortener {
 
+bool IDatabase::check() noexcept {
+    std::lock_guard<std::mutex> lg{m_mtx};
+    return do_check();
+}
+
 std::string IDatabase::insert(const std::string& url, const std::string& ipc) {
     if (url.length() > MAX_URL_LENGTH) {
         throw long_url{"url is too long"};

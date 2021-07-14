@@ -1,5 +1,6 @@
 #include "postgres.h"
 
+#include <plog/Log.h>
 #include <pqxx/pqxx>
 #include <boost/format.hpp>
 
@@ -18,6 +19,16 @@ constexpr const char* TMPL_UPDATE_CNT = "UPDATE public.item SET cnt = cnt + 1 WH
 };
 
 namespace Shortener {
+
+bool Postgres::do_check() noexcept {
+    try {
+        do_request("SELECT idx FROM public.item LIMIT 1");
+    } catch (const std::exception& e) {
+        PLOG_ERROR << e.what();
+        return false;
+    }
+    return true;
+}
 
 uint64_t Postgres::do_insert(const std::string& url, const std::string& ipc) {
     const auto idx = [&]() -> std::string {
@@ -43,7 +54,7 @@ std::string Postgres::do_search(const uint64_t idx) {
     }
 }
 
-std::optional<pqxx::row> Postgres::do_request(const std::string& sql) noexcept {
+std::optional<pqxx::row> Postgres::do_request(const std::string& sql) {
     pqxx::connection database{m_uri};
     pqxx::work request{database};
     pqxx::result result{request.exec(sql)};

@@ -17,10 +17,11 @@ public:
     Postgres& operator=(const Postgres& rh) = delete;
     Postgres& operator=(Postgres&& rh) = delete;
 private:
+    bool do_check() noexcept override;
     uint64_t do_insert(const std::string& url, const std::string& ipc) override;
     std::string do_search(uint64_t idx) override;
 private:
-    std::optional<pqxx::row> do_request(const std::string& sql) noexcept;
+    std::optional<pqxx::row> do_request(const std::string& sql);
 private:
     const std::string m_uri;
 };

@@ -36,6 +36,7 @@ private:
     void request_api(const Request& request, ResponseWriter response);
     void request_key(const Request& request, ResponseWriter response);
     void request_ico(const Request& request, ResponseWriter response);
+    void request_chk(const Request& request, ResponseWriter response);
     void request_err(const Request& request, ResponseWriter response);
 private:
     static std::optional<std::string> get_url(const Request& request) noexcept;
