@@ -2,6 +2,7 @@
 #include "application.h"
 #include "database.h"
 #include "postgres.h"
+#include "xkcd.h"
 
 #include <pistache/router.h>
 #include <pistache/endpoint.h>
@@ -102,7 +103,8 @@ void Application::request_web(const Request& request, ResponseWriter response) {
             response.send(Code::RequestURI_Too_Long, out, MIME(Text, Html));
         }
     } else {
-        const auto out = render_template("html/web.html.in", {{"root", APP_NAME}, {"semver", APP_SEMVER}});
+        const auto [img, msg] = xkcdxx::get_random_comic();
+        const auto out = render_template("html/web.html.in", {{"root", APP_NAME}, {"ver", APP_SEMVER}, {"img", img}, {"msg", msg}});
         response.send(Code::Ok, out, MIME(Text, Html));
     }
 }

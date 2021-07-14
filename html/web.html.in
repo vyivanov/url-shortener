@@ -5,18 +5,24 @@
         <title>{{ root }} &ndash; quick url shortener</title>
     </head>
     <body>
-        <b>Quick URL Shortener</b> <a href="http://{{ root }}/api">[API]</a>
-        <pre>
-<form action="" method="get">
-    <input type="text" name="url" placeholder="url to be shortened quickie" size=50 /> <button type="submit">GO</button>
-</form>
-
+        <center>
+            <p><b>Quick URL Shortener</b> <a href="http://{{ root }}/api">[API]</a>
+            <pre>
 The service does not accept too long links (more than one thousand symbols).
 If you faced with service abusing, please contact to <a href="https://www.vova-ivanov.info" target="_blank">inbox@vova-ivanov.info</a>.
 
-Have fun and be cool...
+<form action="" method="get">
+    <input type="text" name="url" placeholder="url to be shortened quickie" size=60 /> <button type="submit"><b>GO</b></button>
+</form>
 
-[serves from 2021 &ndash; ver. {{ semver }}]
-        </pre>
+Have fun and be cool... &darr; wanna some <a href="https://xkcd.com" target="_blank">xkcd</a>? &darr;
+
+
+<img src="{{ img }}" title="{{ msg }}">
+
+
+[serves from 2021 &ndash; ver. {{ ver }}]
+            </pre>
+        </center>
     </body>
 </html>
