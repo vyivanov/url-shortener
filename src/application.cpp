@@ -1,5 +1,7 @@
 #include "config.h"
 #include "application.h"
+#include "database.h"
+#include "postgres.h"
 
 #include <pistache/router.h>
 #include <pistache/endpoint.h>
@@ -15,13 +17,14 @@
 #include <string>
 #include <optional>
 #include <cstdio>
+#include <memory>
 
 namespace {
 
 class CurlUnescape final {
 public:
     explicit CurlUnescape(const std::string& url) noexcept
-        : m_url{::curl_easy_unescape(nullptr, url.c_str(), 0, nullptr)} {
+        : m_url(::curl_easy_unescape(nullptr, url.c_str(), 0, nullptr)) {
     }
     CurlUnescape(const CurlUnescape& rh) = delete;
     CurlUnescape(CurlUnescape&& rh) = delete;
@@ -63,12 +66,13 @@ constexpr const char* REGEXP_VALID_URL = R"(^(http|https)://)";
 namespace Shortener {
 
 Application::Application(const cfg_db& db, const uint16_t port) noexcept
-: m_db{(boost::format{POSTGRES_CON_URI} %
-    db.user %
-    db.pswd %
-    db.name).str(),
-    db.salt}
-, m_port{Pistache::Port{port}} {
+: m_db(std::make_unique<Postgres>(
+    (boost::format{POSTGRES_CON_URI} %
+        db.user %
+        db.pswd %
+        db.name).str(),
+    db.salt))
+, m_port(Pistache::Port{port}) {
     Get(m_router, "/"           , bind(&Application::request_web, this));
     Get(m_router, "/api"        , bind(&Application::request_api, this));
     Get(m_router, "/:key"       , bind(&Application::request_key, this));
@@ -90,10 +94,10 @@ void Application::request_web(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     if (const auto url = get_url(request); url.has_value()) {
         try {
-            const auto key = m_db.insert(url.value(), request.address().host());
+            const auto key = m_db->insert(url.value(), request.address().host());
             const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
             response.send(Code::Ok, out, MIME(Text, Html));
-        } catch (const Postgres::long_url&) {
+        } catch (const IDatabase::long_url&) {
             const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "url is too long"}});
             response.send(Code::RequestURI_Too_Long, out, MIME(Text, Html));
         }
@@ -107,10 +111,10 @@ void Application::request_api(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     if (const auto url = get_url(request); url.has_value()) {
         try {
-            const auto key = m_db.insert(url.value(), request.address().host());
+            const auto key = m_db->insert(url.value(), request.address().host());
             const auto out = boost::format{"http://%1%/%2%"} % APP_NAME % key;
             response.send(Code::Ok, out.str(), MIME(Text, Plain));
-        } catch (const Postgres::long_url&) {
+        } catch (const IDatabase::long_url&) {
             response.send(Code::RequestURI_Too_Long, "url is too long", MIME(Text, Plain));
         }
     } else {
@@ -123,11 +127,11 @@ void Application::request_key(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     try {
         const auto key = request.param(":key").as<std::string>();
-        const auto url = m_db.search(key);
+        const auto url = m_db->search(key);
         const auto out = render_template("html/url.html.in", {{"root", APP_NAME}, {"url", url}});
         response.headers().add<Location>(url);
         response.send(Code::Found, out, MIME(Text, Html));
-    } catch (const Postgres::undefined_key&) {
+    } catch (const IDatabase::undefined_key&) {
         const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
         response.send(Code::Not_Found, out, MIME(Text, Html));
     }
@@ -141,7 +145,7 @@ void Application::request_ico(const Request& request, ResponseWriter response) {
 
 void Application::request_chk(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
-    if (m_db.check()) {
+    if (m_db->check()) {
         response.send(Code::Ok, "I'm alive!", MIME(Text, Plain));
     } else {
         response.send(Code::Internal_Server_Error, "Bad news...", MIME(Text, Plain));

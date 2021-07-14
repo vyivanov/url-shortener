@@ -19,7 +19,7 @@ services:
       - postgres
     restart: always
   application:
-    image: vyivanov/url-shortener:0.0.11
+    image: vyivanov/url-shortener:0.0.12
     ports:
       - 80:9080
     environment:

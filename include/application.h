@@ -1,12 +1,13 @@
 #pragma once
 
-#include "postgres.h"
+#include "database.h"
 
 #include <pistache/router.h>
 #include <jinja2cpp/template.h>
 
 #include <string>
 #include <optional>
+#include <memory>
 
 namespace {
 
@@ -42,9 +43,9 @@ private:
     static std::optional<std::string> get_url(const Request& request) noexcept;
     static std::string render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept;
 private:
-    Pistache::Rest::Router m_router;
-    Postgres               m_db;
-    Pistache::Port const   m_port;
+    Pistache::Rest::Router           m_router;
+    const std::unique_ptr<IDatabase> m_db;
+    const Pistache::Port             m_port;
 };
 
 };
