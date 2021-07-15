@@ -101,6 +101,9 @@ void Application::request_web(const Request& request, ResponseWriter response) {
         } catch (const IDatabase::long_url&) {
             const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "url is too long"}});
             response.send(Code::RequestURI_Too_Long, out, MIME(Text, Html));
+        } catch (const std::exception& e) {
+            const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", e.what()}});
+            response.send(Code::Internal_Server_Error, out, MIME(Text, Html));
         }
     } else {
         const auto [img, msg] = xkcdxx::get_random_comic();
@@ -118,6 +121,8 @@ void Application::request_api(const Request& request, ResponseWriter response) {
             response.send(Code::Ok, out.str(), MIME(Text, Plain));
         } catch (const IDatabase::long_url&) {
             response.send(Code::RequestURI_Too_Long, "url is too long", MIME(Text, Plain));
+        } catch (const std::exception& e) {
+            response.send(Code::Internal_Server_Error, e.what(), MIME(Text, Plain));
         }
     } else {
         const auto out = render_template("html/api.html.in", {{"root", APP_NAME}});
@@ -136,6 +141,9 @@ void Application::request_key(const Request& request, ResponseWriter response) {
     } catch (const IDatabase::undefined_key&) {
         const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
         response.send(Code::Not_Found, out, MIME(Text, Html));
+    } catch (const std::exception& e) {
+        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", e.what()}});
+        response.send(Code::Internal_Server_Error, out, MIME(Text, Html));
     }
 }
 
@@ -150,7 +158,7 @@ void Application::request_chk(const Request& request, ResponseWriter response) {
     if (m_db->check()) {
         response.send(Code::Ok, "I'm alive!", MIME(Text, Plain));
     } else {
-        response.send(Code::Internal_Server_Error, "Bad news...", MIME(Text, Plain));
+        response.send(Code::Internal_Server_Error, "Bad news in logs...", MIME(Text, Plain));
     }
 }
 

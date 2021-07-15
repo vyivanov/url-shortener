@@ -23,7 +23,7 @@ RUN \
  && cd url-shortener/                             \
  && mkdir build-in-docker/ && cd build-in-docker/ \
  && conan install .. --build=missing              \
- && cmake .. -DCMAKE_BUILD_TYPE=Debug             \
+ && cmake .. -DCMAKE_BUILD_TYPE=Release           \
  && make -j$(nproc --all)
 
 # TODO: move to debuild
