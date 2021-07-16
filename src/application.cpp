@@ -2,7 +2,7 @@
 #include "application.h"
 #include "database.h"
 #include "postgres.h"
-#include "xkcd.h"
+#include "xkcd/xkcdxx.h"
 
 #include <pistache/router.h>
 #include <pistache/endpoint.h>
@@ -77,8 +77,8 @@ Application::Application(const cfg_db& db, const uint16_t port) noexcept
     Get(m_router, "/"           , bind(&Application::request_web, this));
     Get(m_router, "/api"        , bind(&Application::request_api, this));
     Get(m_router, "/:key"       , bind(&Application::request_key, this));
-    Get(m_router, "/favicon.ico", bind(&Application::request_ico, this));
-    Get(m_router, "/api/check"  , bind(&Application::request_chk, this));
+    Get(m_router, "/favicon.ico", bind(&Application::request_fcn, this));
+    Get(m_router, "/api/ping"  ,  bind(&Application::request_png, this));
     NotFound(m_router           , bind(&Application::request_err, this));
 }
 
@@ -89,44 +89,45 @@ void Application::serve() noexcept {
     service.init(opts);
     service.setHandler(m_router.handler());
     service.serve();
+    service.shutdown();
 }
 
 void Application::request_web(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
-    if (const auto url = get_url(request); url.has_value()) {
-        try {
+    try {
+        if (const auto url = get_url(request); url.has_value()) {
             const auto key = m_db->insert(url.value(), request.address().host());
             const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
             response.send(Code::Ok, out, MIME(Text, Html));
-        } catch (const IDatabase::long_url&) {
-            const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "url is too long"}});
-            response.send(Code::RequestURI_Too_Long, out, MIME(Text, Html));
-        } catch (const std::exception& e) {
-            const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", e.what()}});
-            response.send(Code::Internal_Server_Error, out, MIME(Text, Html));
+        } else {
+            const auto [x, y, img, z, msg] = xkcdxx::Comic(xkcdxx::Comic::Number::Random).info();
+            const auto out = render_template("html/web.html.in", {{"root", APP_NAME}, {"ver", APP_SEMVER}, {"img", img}, {"msg", msg}});
+            response.send(Code::Ok, out, MIME(Text, Html));
         }
-    } else {
-        const auto [img, msg] = xkcdxx::get_random_comic();
-        const auto out = render_template("html/web.html.in", {{"root", APP_NAME}, {"ver", APP_SEMVER}, {"img", img}, {"msg", msg}});
-        response.send(Code::Ok, out, MIME(Text, Html));
+    } catch (const IDatabase::long_url& ex) {
+        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "url is too long"}});
+        response.send(Code::RequestURI_Too_Long, out, MIME(Text, Html));
+    } catch (const std::exception& ex) {
+        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", ex.what()}});
+        response.send(Code::Internal_Server_Error, out, MIME(Text, Html));
     }
 }
 
 void Application::request_api(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
-    if (const auto url = get_url(request); url.has_value()) {
-        try {
+    try {
+        if (const auto url = get_url(request); url.has_value()) {
             const auto key = m_db->insert(url.value(), request.address().host());
             const auto out = boost::format{"http://%1%/%2%"} % APP_NAME % key;
             response.send(Code::Ok, out.str(), MIME(Text, Plain));
-        } catch (const IDatabase::long_url&) {
-            response.send(Code::RequestURI_Too_Long, "url is too long", MIME(Text, Plain));
-        } catch (const std::exception& e) {
-            response.send(Code::Internal_Server_Error, e.what(), MIME(Text, Plain));
+        } else {
+            const auto out = render_template("html/api.html.in", {{"root", APP_NAME}});
+            response.send(Code::Ok, out, MIME(Text, Html));
         }
-    } else {
-        const auto out = render_template("html/api.html.in", {{"root", APP_NAME}});
-        response.send(Code::Ok, out, MIME(Text, Html));
+    } catch (const IDatabase::long_url& ex) {
+        response.send(Code::RequestURI_Too_Long, "url is too long", MIME(Text, Plain));
+    } catch (const std::exception& ex) {
+        response.send(Code::Internal_Server_Error, ex.what(), MIME(Text, Plain));
     }
 }
 
@@ -138,24 +139,24 @@ void Application::request_key(const Request& request, ResponseWriter response) {
         const auto out = render_template("html/url.html.in", {{"root", APP_NAME}, {"url", url}});
         response.headers().add<Location>(url);
         response.send(Code::Found, out, MIME(Text, Html));
-    } catch (const IDatabase::undefined_key&) {
+    } catch (const IDatabase::undefined_key& ex) {
         const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
         response.send(Code::Not_Found, out, MIME(Text, Html));
-    } catch (const std::exception& e) {
-        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", e.what()}});
+    } catch (const std::exception& ex) {
+        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", ex.what()}});
         response.send(Code::Internal_Server_Error, out, MIME(Text, Html));
     }
 }
 
-void Application::request_ico(const Request& request, ResponseWriter response) {
+void Application::request_fcn(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     response.headers().add<ContentType>("image/x-icon");
     serveFile(response, "favicon.ico");
 }
 
-void Application::request_chk(const Request& request, ResponseWriter response) {
+void Application::request_png(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
-    if (m_db->check()) {
+    if (m_db->ping()) {
         response.send(Code::Ok, "I'm alive!", MIME(Text, Plain));
     } else {
         response.send(Code::Internal_Server_Error, "Bad news in logs...", MIME(Text, Plain));

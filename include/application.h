@@ -31,13 +31,13 @@ public:
     Application(Application&& rh) = delete;
     Application& operator=(const Application& rh) = delete;
     Application& operator=(Application&& rh) = delete;
-    [[noreturn]] void serve() noexcept;
+    void serve() noexcept;
 private:
     void request_web(const Request& request, ResponseWriter response);
     void request_api(const Request& request, ResponseWriter response);
     void request_key(const Request& request, ResponseWriter response);
-    void request_ico(const Request& request, ResponseWriter response);
-    void request_chk(const Request& request, ResponseWriter response);
+    void request_fcn(const Request& request, ResponseWriter response);
+    void request_png(const Request& request, ResponseWriter response);
     void request_err(const Request& request, ResponseWriter response);
 private:
     static std::optional<std::string> get_url(const Request& request) noexcept;

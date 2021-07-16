@@ -17,7 +17,7 @@ public:
     Postgres& operator=(const Postgres& rh) = delete;
     Postgres& operator=(Postgres&& rh) = delete;
 private:
-    bool do_check() noexcept override;
+    bool do_ping() noexcept override;
     uint64_t do_insert(const std::string& url, const std::string& ipc) override;
     std::string do_search(uint64_t idx) override;
 private:

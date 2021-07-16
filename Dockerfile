@@ -6,11 +6,15 @@ WORKDIR /opt
 
 RUN \
     apt update && apt install -y \
-        wget build-essential     \
-        git cmake                \
-        devscripts debhelper     \
-        python3 python3-pip      \
- && pip3 install conan           \
+         wget            \
+         build-essential \
+         git             \
+         cmake           \
+         devscripts      \
+         debhelper       \
+         python3         \
+         python3-pip     \
+ && pip3 install conan   \
     \
  && conan profile new --detect default                                \
  && conan profile update settings.compiler.libcxx=libstdc++11 default \
@@ -42,7 +46,7 @@ COPY --from=build /opt/url-shortener/html ./html
 RUN \
     chmod +x entrypoint.sh \
     \
- && apt update && apt install -y postgresql-client \
+ && apt update && apt install -y postgresql-client curl \
     \
  && rm -rf /var/lib/apt/lists/*
 

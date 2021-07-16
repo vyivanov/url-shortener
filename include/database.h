@@ -17,13 +17,13 @@ public:
         explicit undefined_key(const char* what) noexcept: std::runtime_error(what) {}
     };
     virtual ~IDatabase() = default;
-    bool check() noexcept;
+    bool ping() noexcept;
     std::string insert(const std::string& url, const std::string& ipc);
     std::string search(const std::string& key);
 protected:
     explicit IDatabase(const std::string& salt) noexcept: m_key(salt, 3) {}
 private:
-    virtual bool do_check() = 0;
+    virtual bool do_ping() = 0;
     virtual uint64_t do_insert(const std::string& url, const std::string& ipc) = 0;
     virtual std::string do_search(uint64_t idx) = 0;
 private:

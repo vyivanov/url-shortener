@@ -11,9 +11,9 @@ constexpr uint16_t MAX_URL_LENGTH = 1'024UL;
 
 namespace Shortener {
 
-bool IDatabase::check() noexcept {
+bool IDatabase::ping() noexcept {
     std::lock_guard<std::mutex> lg{m_mtx};
-    return do_check();
+    return do_ping();
 }
 
 std::string IDatabase::insert(const std::string& url, const std::string& ipc) {

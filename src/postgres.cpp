@@ -20,7 +20,7 @@ constexpr const char* TMPL_UPDATE_CNT = "UPDATE public.item SET cnt = cnt + 1 WH
 
 namespace Shortener {
 
-bool Postgres::do_check() noexcept {
+bool Postgres::do_ping() noexcept {
     try {
         do_request("SELECT idx FROM public.item LIMIT 1");
     } catch (const std::exception& e) {
