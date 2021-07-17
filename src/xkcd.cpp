@@ -3,6 +3,7 @@
 #include <curl/curl.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <string>
 #include <stdexcept>
@@ -37,9 +38,11 @@ comic get_random_comic() {
         ss << body;
         boost::property_tree::ptree json = {};
         boost::property_tree::read_json(ss, json);
+        std::string title = json.get<std::string>("title");
+        boost::algorithm::replace_all(title, "\x22", "&quot;");
         return comic{
             .img = json.get<std::string>("url"),
-            .msg = json.get<std::string>("title"),
+            .msg = title,
         };
     } else {
         throw std::runtime_error{"Fail to init libcurl"};

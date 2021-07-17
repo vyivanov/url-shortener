@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as build
 
 ENV DEBIAN_FRONTEND=noninteractive
 COPY ./ /opt/url-shortener
@@ -29,22 +29,22 @@ RUN \
 # TODO: move to debuild
 # TODO: get rid of conan
 
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as deploy
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /root
 
-COPY --from=0 /opt/url-shortener/build-in-docker/bin/url-shortener ./
-COPY --from=0 /opt/url-shortener/entrypoint.sh ./
-COPY --from=0 /opt/url-shortener/img/favicon.ico ./
-COPY --from=0 /opt/url-shortener/html ./html
+COPY --from=build /opt/url-shortener/build-in-docker/bin/url-shortener ./
+COPY --from=build /opt/url-shortener/entrypoint.sh ./
+COPY --from=build /opt/url-shortener/img/favicon.ico ./
+COPY --from=build /opt/url-shortener/html ./html
 
 RUN \
-   chmod +x entrypoint.sh \
+    chmod +x entrypoint.sh \
     \
  && apt update && apt install -y postgresql-client \
     \
  && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 80
+EXPOSE 9080
 ENTRYPOINT ["/root/entrypoint.sh"]
