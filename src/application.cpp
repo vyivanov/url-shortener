@@ -25,7 +25,7 @@ namespace {
 class CurlUnescape final {
 public:
     explicit CurlUnescape(const std::string& url) noexcept
-        : m_url(::curl_easy_unescape(nullptr, url.c_str(), 0, nullptr)) {
+        : m_url(::curl_unescape(url.c_str(), url.length())) {
     }
     CurlUnescape(const CurlUnescape& rh) = delete;
     CurlUnescape(CurlUnescape&& rh) = delete;

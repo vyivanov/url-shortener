@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 as build
+FROM ubuntu:20.04 AS build
 
 ENV DEBIAN_FRONTEND=noninteractive
 COPY ./ /opt/url-shortener
@@ -29,7 +29,7 @@ RUN \
 # TODO: move to debuild
 # TODO: get rid of conan
 
-FROM ubuntu:20.04 as deploy
+FROM ubuntu:20.04 AS deploy
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /root
