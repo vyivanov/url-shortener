@@ -1,32 +1,35 @@
 FROM ubuntu:20.04 AS build
 
 COPY ./ /opt/url-shortener
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN \
-    apt-get update                             \
- && DEBIAN_FRONTEND=noninteractive             \
-    apt-get install -y --no-install-recommends \
-        wget                                   \
-        git                                    \
-        unzip                                  \
-        lintian                                \
-        build-essential                        \
-        cmake                                  \
-        devscripts                             \
-        debhelper                              \
-        python3                                \
-        python3-pip                            \
-        meson                                  \
-        cppcheck                               \
-        dh-exec                                \
-        libcurl4-openssl-dev                   \
-        libgtest-dev                           \
-        libssl-dev                             \
-        pkg-config                             \
-        rapidjson-dev                          \
-        valgrind                               \
-        patch                                  \
- && pip3 install conan                         \
+    apt-get update && apt-get install --yes --no-install-recommends \
+        software-properties-common \
+        wget                       \
+        git                        \
+        unzip                      \
+        lintian                    \
+        build-essential            \
+        cmake                      \
+        devscripts                 \
+        debhelper                  \
+        python3                    \
+        python3-pip                \
+        meson                      \
+        cppcheck                   \
+        dh-exec                    \
+        libcurl4-openssl-dev       \
+        libgtest-dev               \
+        libssl-dev                 \
+        pkg-config                 \
+        rapidjson-dev              \
+        valgrind                   \
+        patch                      \
+ && pip3 install conan             \
+    \
+ && add-apt-repository --yes --update ppa:vyivanov/xkcdxx \
+ && apt install --yes xkcdxx=0.0.2~ubuntu20.04            \
     \
  && conan profile new --detect default                                \
  && conan profile update settings.compiler.libcxx=libstdc++11 default \
@@ -63,12 +66,12 @@ COPY --from=build /opt/url-shortener/entrypoint.sh ./
 COPY --from=build /opt/url-shortener/img/favicon.ico ./
 COPY --from=build /opt/url-shortener/html ./html
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN \
-    apt-get update                             \
- && DEBIAN_FRONTEND=noninteractive             \
-    apt-get install -y --no-install-recommends \
-        wait-for-it                            \
-        postgresql-client                      \
+    apt-get update && apt-get install --yes --no-install-recommends \
+        wait-for-it       \
+        postgresql-client \
     \
  && apt-get clean               \
  && rm -rf /var/lib/apt/lists/* \
