@@ -16,6 +16,7 @@ namespace xkcdxx::client {
 Xkcd::Xkcd() noexcept: m_xkcd("https://xkcd.com") {
     m_xkcd.set_keep_alive(true);
     m_xkcd.set_follow_location(true);
+    m_xkcd.enable_server_certificate_verification(false);
 }
 
 Comic::Info Xkcd::get_info(const uint64_t num) {
@@ -44,7 +45,8 @@ Comic::Info Xkcd::get_info(const uint64_t num) {
                              std::string("\x20status code");
             throw Comic::request_failed(why);
         } else {
-            const auto why = std::string("network error");
+            const auto why = std::string("network error\x20") +
+                             std::to_string(static_cast<int>(response.error()));
             throw Comic::request_failed(why);
         }
     }

@@ -46,7 +46,7 @@ COPY --from=build /opt/url-shortener/html ./html
 RUN \
     chmod +x entrypoint.sh \
     \
- && apt update && apt install -y postgresql-client curl \
+ && apt update && apt install -y postgresql-client \
     \
  && rm -rf /var/lib/apt/lists/*
 
