@@ -6,7 +6,7 @@
     </head>
     <body>
         <center>
-            <p><b>Quick URL Shortener</b> <a href="http://{{ root }}/api">[API]</a>
+            <p><b>Quick URL Shortener</b> <a href="https://{{ root }}/api">[API]</a>
             <pre>
 The service does not accept too long links (more than one thousand symbols).
 If you faced with service abusing, please contact to <a href="https://www.vova-ivanov.info" target="_blank">inbox@vova-ivanov.info</a>.

@@ -5,16 +5,16 @@
         <title>{{ root }} &ndash; quick url shortener</title>
     </head>
     <body>
-        <b>API</b> <a href="http://{{ root }}">[back]</a>
+        <b>API</b> <a href="https://{{ root }}">[back]</a>
         <pre>
 This service supports API calls for automation purposes.
 
   <b>Bash example</b>:
-    $ curl -X GET 'http://{{ root }}/api?url=example.com'
+    $ curl -X GET 'https://{{ root }}/api?url=example.com'
 
   <b>Python-3 example</b>:
     1| import requests
-    2| resp = requests.get('http://{{ root }}/api?url=example.com')
+    2| resp = requests.get('https://{{ root }}/api?url=example.com')
     3| print(resp.status_code, resp.content)
 
 The result is returned as plain text in response.

@@ -17,9 +17,12 @@ services:
       - postgres
     restart: always
   application:
-    image: vyivanov/url-shortener:0.0.18
+    image: vyivanov/url-shortener:0.0.19
     ports:
-      - 80:9080
+      -  80:9080
+      - 443:9443
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

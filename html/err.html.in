@@ -5,6 +5,6 @@
         <title>{{ root }} &ndash; quick url shortener</title>
     </head>
     <body>
-        {{ msg }} <a href="http://{{ root }}">[back]</a>
+        {{ msg }} <a href="https://{{ root }}">[back]</a>
     </body>
 </html>

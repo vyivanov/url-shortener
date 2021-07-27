@@ -33,4 +33,4 @@ COMMENT ON COLUMN public.item.cnt IS 'redirection counter';
 EOF
 fi
 
-exec /root/url-shortener
+exec /var/www/url-shortener

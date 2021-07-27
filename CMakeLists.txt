@@ -62,4 +62,4 @@ add_executable(${PROJECT_NAME}
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -std=c++17)
 target_include_directories(${PROJECT_NAME} PRIVATE include/)
-target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS} hashids libstatic)
+target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS} pistache.a hashids.a libstatic)

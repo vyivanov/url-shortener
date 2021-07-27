@@ -26,26 +26,31 @@ public:
         std::string name;
         std::string salt;
     };
-    Application(const cfg_db& db, uint16_t port) noexcept;
-    Application(const Application& rh) = delete;
-    Application(Application&& rh) = delete;
-    Application& operator=(const Application& rh) = delete;
-    Application& operator=(Application&& rh) = delete;
+    struct cfg_port {
+        uint16_t http;
+        uint16_t ssl;
+    };
+    Application(const cfg_db& db, const cfg_port& port) noexcept;
+    Application(const Application& other) = delete;
+    Application(Application&& other) = delete;
+    Application& operator=(const Application& other) = delete;
+    Application& operator=(Application&& other) = delete;
     void serve() noexcept;
 private:
     void request_web(const Request& request, ResponseWriter response);
     void request_api(const Request& request, ResponseWriter response);
     void request_key(const Request& request, ResponseWriter response);
-    void request_fcn(const Request& request, ResponseWriter response);
-    void request_png(const Request& request, ResponseWriter response);
-    void request_err(const Request& request, ResponseWriter response);
+    void request_favicon(const Request& request, ResponseWriter response);
+    void request_ping(const Request& request, ResponseWriter response);
+    void request_certbot(const Request& request, ResponseWriter response);
+    void request_error(const Request& request, ResponseWriter response);
 private:
     static std::optional<std::string> get_url(const Request& request) noexcept;
     static std::string render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept;
 private:
     Pistache::Rest::Router           m_router;
     const std::unique_ptr<IDatabase> m_db;
-    const Pistache::Port             m_port;
+    const cfg_port                   m_port;
 };
 
 };

@@ -27,10 +27,10 @@ public:
     explicit CurlUnescape(const std::string& url) noexcept
         : m_url(::curl_unescape(url.c_str(), url.length())) {
     }
-    CurlUnescape(const CurlUnescape& rh) = delete;
-    CurlUnescape(CurlUnescape&& rh) = delete;
-    CurlUnescape& operator=(const CurlUnescape& rh) = delete;
-    CurlUnescape& operator=(CurlUnescape&& rh) = delete;
+    CurlUnescape(const CurlUnescape& other) = delete;
+    CurlUnescape(CurlUnescape&& other) = delete;
+    CurlUnescape& operator=(const CurlUnescape& other) = delete;
+    CurlUnescape& operator=(CurlUnescape&& other) = delete;
    ~CurlUnescape() {
         ::curl_free((void*)m_url);
     }
@@ -56,9 +56,14 @@ using Pistache::Http::Header::ContentType;
 constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@postgres/%3%)";
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https)://)";
 
+constexpr const char* SSL_CERT = "/etc/letsencrypt/live/www.clck.app/fullchain.pem";
+constexpr const char* SSL_KEY  = "/etc/letsencrypt/live/www.clck.app/privkey.pem";
+
+constexpr const char* CERTBOT_PATH = R"(/etc/letsencrypt/certbot%1%)";
+
 };
 
-#define ROUTE_LOG(request) \
+#define ROUTE_LOG(request)                          \
     PLOG_INFO << request.method()         << '\x20' \
               << request.resource()       << '\x20' \
               << request.query().as_str() << '\x20' \
@@ -66,30 +71,40 @@ constexpr const char* REGEXP_VALID_URL = R"(^(http|https)://)";
 
 namespace Shortener {
 
-Application::Application(const cfg_db& db, const uint16_t port) noexcept
+Application::Application(const cfg_db& db, const cfg_port& port) noexcept
 : m_db(std::make_unique<Postgres>(
     (boost::format{POSTGRES_CON_URI} %
         db.user %
         db.pswd %
         db.name).str(),
     db.salt))
-, m_port(Pistache::Port{port}) {
-    Get(m_router, "/"           , bind(&Application::request_web, this));
-    Get(m_router, "/api"        , bind(&Application::request_api, this));
-    Get(m_router, "/:key"       , bind(&Application::request_key, this));
-    Get(m_router, "/favicon.ico", bind(&Application::request_fcn, this));
-    Get(m_router, "/api/ping"  ,  bind(&Application::request_png, this));
-    NotFound(m_router           , bind(&Application::request_err, this));
+, m_port(port) {
+    Get(m_router, "/"               , bind(&Application::request_web    , this));
+    Get(m_router, "/api"            , bind(&Application::request_api    , this));
+    Get(m_router, "/:key"           , bind(&Application::request_key    , this));
+    Get(m_router, "/favicon.ico"    , bind(&Application::request_favicon, this));
+    Get(m_router, "/api/ping"       , bind(&Application::request_ping   , this));
+    Get(m_router, "/.well-known/*/*", bind(&Application::request_certbot, this));
+    NotFound(m_router               , bind(&Application::request_error  , this));
 }
 
 void Application::serve() noexcept {
-    const auto addr = Pistache::Address{Pistache::Ipv4::any(), m_port};
-    const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency() << 1);
-    Endpoint service{addr};
-    service.init(opts);
-    service.setHandler(m_router.handler());
-    service.serve();
-    service.shutdown();
+    const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency());
+    std::thread http{[&]() {
+        Endpoint rest{Pistache::Address{Pistache::Ipv4::any(), Pistache::Port{m_port.http}}};
+        rest.init(opts);
+        rest.setHandler(m_router.handler());
+        rest.serve();
+    }};
+    std::thread ssl{[&]() {
+        Endpoint rest{Pistache::Address{Pistache::Ipv4::any(), Pistache::Port{m_port.ssl}}};
+        rest.init(opts);
+        rest.setHandler(m_router.handler());
+        rest.useSSL(SSL_CERT, SSL_KEY);
+        rest.serve();
+    }};
+    http.join();
+    ssl .join();
 }
 
 void Application::request_web(const Request& request, ResponseWriter response) {
@@ -148,13 +163,13 @@ void Application::request_key(const Request& request, ResponseWriter response) {
     }
 }
 
-void Application::request_fcn(const Request& request, ResponseWriter response) {
+void Application::request_favicon(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     response.headers().add<ContentType>("image/x-icon");
     serveFile(response, "favicon.ico");
 }
 
-void Application::request_png(const Request& request, ResponseWriter response) {
+void Application::request_ping(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     if (m_db->ping()) {
         response.send(Code::Ok, "I'm alive!", MIME(Text, Plain));
@@ -163,21 +178,27 @@ void Application::request_png(const Request& request, ResponseWriter response) {
     }
 }
 
-void Application::request_err(const Request& request, ResponseWriter response) {
+void Application::request_certbot(const Request& request, ResponseWriter response) {
+    ROUTE_LOG(request);
+    const auto file = boost::format{CERTBOT_PATH} % request.resource();
+    serveFile(response, file.str(), MIME(Text, Plain));
+}
+
+void Application::request_error(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
     response.send(Code::Not_Found, out, MIME(Text, Html));
 }
 
 std::optional<std::string> Application::get_url(const Request& request) noexcept {
-    if (request.query().has("url") &&
-            request.query().get("url").get().empty() == false) {
-        const std::string inp_url = request.query().get("url").get();
+    if (request.query().get("url") &&
+            request.query().get("url").value().empty() == false) {
+        const std::string inp_url = request.query().get("url").value();
         const std::string out_url = CurlUnescape{inp_url}();
         if (std::regex_search(out_url, std::regex{REGEXP_VALID_URL})) {
             return out_url;
         } else {
-            return std::string{"http://"} + out_url;
+            return (boost::format{"http://%1%"} % out_url).str();
         }
     }
     return std::nullopt;
