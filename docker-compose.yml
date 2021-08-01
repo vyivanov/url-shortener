@@ -1,33 +1,59 @@
 version: '3.0'
 services:
-  postgres:
+  storage:
     image: postgres:13
     volumes:
-      - /opt/url-shortener/postgres:/var/lib/postgresql/data
+      - /opt/url-shortener/storage:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+    networks:
+      - back_adminer
+      - back_application
     restart: always
   adminer:
     image: adminer:4.8.1
-    ports:
-      - 7777:8080
     depends_on:
-      - postgres
+      - storage
+    networks:
+      - back_adminer
+      - front_adminer
     restart: always
   application:
-    image: vyivanov/url-shortener:0.0.19
-    ports:
-      -  80:9080
-      - 443:9443
-    volumes:
-      - /etc/letsencrypt:/etc/letsencrypt
+    image: vyivanov/url-shortener:0.0.20
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - HASH_SALT=${HASH_SALT}
     depends_on:
-      - postgres
+      - storage
+    networks:
+      - back_application
+      - front_application
     restart: always
+  proxy:
+    image: vyivanov/nginx-1.21.1
+    ports:
+      - 80:80
+      - 443:443
+      - 5000:5000
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+    depends_on:
+      - adminer
+      - application
+    networks:
+      - front_adminer
+      - front_application
+    restart: always
+networks:
+  front_adminer:
+    driver: bridge
+  front_application:
+    driver: bridge
+  back_adminer:
+    driver: bridge
+  back_application:
+    driver: bridge

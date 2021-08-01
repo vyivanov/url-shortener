@@ -12,7 +12,7 @@ The service does not accept too long links (more than one thousand symbols).
 If you faced with service abusing, please contact to <a href="https://www.vova-ivanov.info" target="_blank">inbox@vova-ivanov.info</a>.
 
 <form action="" method="get">
-    <input type="text" name="url" placeholder="url to be shortened quickie" size=60 /> <button type="submit"><b>GO</b></button>
+    <input type="text" name="url" placeholder="url to be shortened quickie" size=60 /> <button type="submit"><b>GO!</b></button>
 </form>
 
 Have fun and be cool... &darr; wanna some <a href="https://xkcd.com" target="_blank">xkcd</a>? &darr;
@@ -21,7 +21,7 @@ Have fun and be cool... &darr; wanna some <a href="https://xkcd.com" target="_bl
 <img src="{{ img }}" title="{{ msg }}">
 
 
-[serves from 2021 &ndash; ver. {{ ver }}]
+[serves from 2021 &ndash; ver. {{ ver }}, <font color="red">prototype</font>]
             </pre>
         </center>
     </body>

@@ -7,7 +7,7 @@
     <body>
         Your quick link <a href="https://{{ root }}">[back]</a>
         <pre>
-<a href="https://{{ root }}/{{ key }}" target="_blank">https://{{ root }}/{{ key }}</a>
+<a href="https://{{ root }}/{{ key }}" target="_blank">{{ root }}/{{ key }}</a>
 
 Now you can to save or to distribute this link over the internet.
         </pre>

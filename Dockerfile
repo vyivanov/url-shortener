@@ -7,7 +7,6 @@ RUN \
     apt update && apt install -y \
          wget                    \
          build-essential         \
-         git                     \
          cmake                   \
          devscripts              \
          debhelper               \
@@ -22,25 +21,30 @@ RUN \
          pkg-config              \
          rapidjson-dev           \
          valgrind                \
+         patch                   \
  && pip3 install conan           \
     \
  && conan profile new --detect default                                \
  && conan profile update settings.compiler.libcxx=libstdc++11 default \
  && conan profile update settings.compiler.cppstd=17 default          \
     \
- && cd /opt/                                            \
- && git clone https://github.com/vyivanov/hashidsxx.git \
- && cd hashidsxx/ && debuild -uc -us && cd ../          \
- && dpkg -i hashidsxx_1.0.0_amd64.deb                   \
+ && cd /opt/url-shortener/deps/ \
     \
- && cd /opt/url-shortener/deps/                                \
- && mkdir pistache_0.0.002/                                    \
- && tar zxvf pistache_0.0.002.orig.tar.gz -C pistache_0.0.002/ \
- && cd pistache_0.0.002/ && debuild -uc -us && cd ../          \
- && dpkg -i libpistache0_0.0.002-pistache1_amd64.deb           \
- && dpkg -i libpistache-dev_0.0.002-pistache1_amd64.deb        \
+ && mkdir hashidsxx_1.0.0.orig/                                   \
+ && tar zxvf hashidsxx_1.0.0.orig.tar.gz -C hashidsxx_1.0.0.orig/ \
+ && cd hashidsxx_1.0.0.orig/ && debuild -uc -us && cd ../         \
+ && dpkg -i hashidsxx_1.0.0_amd64.deb                             \
     \
- && cd /opt/url-shortener/                        \
+ && mkdir pistache_0.0.002.orig/                                    \
+ && tar zxvf pistache_0.0.002.orig.tar.gz -C pistache_0.0.002.orig/ \
+ && patch -p0 < pistache.001.native-format.patch                    \
+ && patch -p0 < pistache.002.ssl-disable.patch                      \
+ && cd pistache_0.0.002.orig/ && debuild -uc -us && cd ../          \
+ && dpkg -i libpistache0_0.0.002-pistache1_amd64.deb                \
+ && dpkg -i libpistache-dev_0.0.002-pistache1_amd64.deb             \
+    \
+ && cd /opt/url-shortener/ \
+    \
  && mkdir build-in-docker/ && cd build-in-docker/ \
  && conan install .. --build=missing              \
  && cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release   \
@@ -64,6 +68,4 @@ RUN \
  && chmod +x entrypoint.sh
 
 EXPOSE 9080
-EXPOSE 9443
-
 ENTRYPOINT ["/var/www/entrypoint.sh"]
