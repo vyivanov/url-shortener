@@ -53,13 +53,8 @@ using Pistache::Http::methodString;
 using Pistache::Http::Header::Location;
 using Pistache::Http::Header::ContentType;
 
-constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@postgres/%3%)";
+constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@storage/%3%)";
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https)://)";
-
-constexpr const char* SSL_CERT = "/etc/letsencrypt/live/www.clck.app/fullchain.pem";
-constexpr const char* SSL_KEY  = "/etc/letsencrypt/live/www.clck.app/privkey.pem";
-
-constexpr const char* CERTBOT_PATH = R"(/etc/letsencrypt/certbot%1%)";
 
 };
 
@@ -67,51 +62,40 @@ constexpr const char* CERTBOT_PATH = R"(/etc/letsencrypt/certbot%1%)";
     PLOG_INFO << request.method()         << '\x20' \
               << request.resource()       << '\x20' \
               << request.query().as_str() << '\x20' \
-              << request.address().host()
+              << get_host(request)
 
 namespace Shortener {
 
-Application::Application(const cfg_db& db, const cfg_port& port) noexcept
+Application::Application(const cfg_db& db, const uint16_t port) noexcept
 : m_db(std::make_unique<Postgres>(
     (boost::format{POSTGRES_CON_URI} %
         db.user %
         db.pswd %
         db.name).str(),
     db.salt))
-, m_port(port) {
+, m_port(Pistache::Port{port}) {
     Get(m_router, "/"               , bind(&Application::request_web    , this));
     Get(m_router, "/api"            , bind(&Application::request_api    , this));
     Get(m_router, "/:key"           , bind(&Application::request_key    , this));
     Get(m_router, "/favicon.ico"    , bind(&Application::request_favicon, this));
     Get(m_router, "/api/ping"       , bind(&Application::request_ping   , this));
-    Get(m_router, "/.well-known/*/*", bind(&Application::request_certbot, this));
     NotFound(m_router               , bind(&Application::request_error  , this));
 }
 
 void Application::serve() noexcept {
-    const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency());
-    std::thread http{[&]() {
-        Endpoint rest{Pistache::Address{Pistache::Ipv4::any(), Pistache::Port{m_port.http}}};
-        rest.init(opts);
-        rest.setHandler(m_router.handler());
-        rest.serve();
-    }};
-    std::thread ssl{[&]() {
-        Endpoint rest{Pistache::Address{Pistache::Ipv4::any(), Pistache::Port{m_port.ssl}}};
-        rest.init(opts);
-        rest.setHandler(m_router.handler());
-        rest.useSSL(SSL_CERT, SSL_KEY);
-        rest.serve();
-    }};
-    http.join();
-    ssl .join();
+    const auto addr = Pistache::Address{Pistache::Ipv4::any(), m_port};
+    const auto opts = Endpoint::options().threads(std::thread::hardware_concurrency() << 1);
+    Endpoint service{addr};
+    service.init(opts);
+    service.setHandler(m_router.handler());
+    service.serve();
 }
 
 void Application::request_web(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     try {
         if (const auto url = get_url(request); url.has_value()) {
-            const auto key = m_db->insert(url.value(), request.address().host());
+            const auto key = m_db->insert(url.value(), get_host(request));
             const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
             response.send(Code::Ok, out, MIME(Text, Html));
         } else {
@@ -132,8 +116,8 @@ void Application::request_api(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     try {
         if (const auto url = get_url(request); url.has_value()) {
-            const auto key = m_db->insert(url.value(), request.address().host());
-            const auto out = boost::format{"http://%1%/%2%"} % APP_NAME % key;
+            const auto key = m_db->insert(url.value(), get_host(request));
+            const auto out = boost::format{"%1%/%2%"} % APP_NAME % key;
             response.send(Code::Ok, out.str(), MIME(Text, Plain));
         } else {
             const auto out = render_template("html/api.html.in", {{"root", APP_NAME}});
@@ -178,12 +162,6 @@ void Application::request_ping(const Request& request, ResponseWriter response) 
     }
 }
 
-void Application::request_certbot(const Request& request, ResponseWriter response) {
-    ROUTE_LOG(request);
-    const auto file = boost::format{CERTBOT_PATH} % request.resource();
-    serveFile(response, file.str(), MIME(Text, Plain));
-}
-
 void Application::request_error(const Request& request, ResponseWriter response) {
     ROUTE_LOG(request);
     const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
@@ -202,6 +180,14 @@ std::optional<std::string> Application::get_url(const Request& request) noexcept
         }
     }
     return std::nullopt;
+}
+
+std::string Application::get_host(const Request& request) noexcept {
+    const auto client = request.headers().tryGetRaw("X-Forwarded-For");
+    if (client.has_value()) {
+        return client.value().value();
+    }
+    return request.address().host();
 }
 
 std::string Application::render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept {

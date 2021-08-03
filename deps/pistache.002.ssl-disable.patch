@@ -1,0 +1,31 @@
+diff --color -ru pistache_0.0.002.orig/debian/rules pistache_0.0.002.new/debian/rules
+--- pistache_0.0.002.orig/debian/rules	2021-07-08 02:59:08.000000000 +0300
++++ pistache_0.0.002.new/debian/rules	2021-08-01 06:22:14.901717087 +0300
+@@ -44,11 +44,11 @@
+ override_dh_auto_configure:
+ 	dh_auto_configure --														\
+ 		--default-library=both													\
+-		-DPISTACHE_BUILD_EXAMPLES=true											\
++		-DPISTACHE_BUILD_EXAMPLES=false											\
+ 		-DPISTACHE_BUILD_TESTS=true												\
+ 		-DPISTACHE_ENABLE_NETWORK_TESTS=false									\
+ 		-DPISTACHE_BUILD_DOCS=false												\
+-		-DPISTACHE_USE_SSL=true													\
++		-DPISTACHE_USE_SSL=false													\
+ 
+ # It is pointless to customize the tests until we upgrade to debhelper-compat 13,
+ # because debhelper 12 runs ninja test instead of meson test, and --wrap=valgrind
+@@ -77,11 +77,11 @@
+ 	&& cd $(PACKAGE_DIR)														\
+ 	&& meson setup $(DEB_SOURCE)_$(DEB_VERSION_UPSTREAM) ..						\
+ 		--buildtype=plain														\
+-		-DPISTACHE_BUILD_EXAMPLES=true											\
++		-DPISTACHE_BUILD_EXAMPLES=false											\
+ 		-DPISTACHE_BUILD_TESTS=true												\
+ 		-DPISTACHE_ENABLE_NETWORK_TESTS=false									\
+ 		-DPISTACHE_BUILD_DOCS=false												\
+-		-DPISTACHE_USE_SSL=true													\
++		-DPISTACHE_USE_SSL=false													\
+ 		--prefix=/usr															\
+ 		--wrap-mode=nodownload													\
+ 	&& meson dist -C $(DEB_SOURCE)_$(DEB_VERSION_UPSTREAM) --formats=gztar	\

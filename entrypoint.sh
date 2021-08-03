@@ -5,14 +5,15 @@ readonly PSWD=${POSTGRES_PASSWORD}
 readonly   DB=${POSTGRES_DB}
 
 if [ -z "${USER}" ] || [ -z "${PSWD}" ] || [ -z "${DB}" ]; then
+    echo 'bad database config' >&2
     exit 42
 fi
 
-out=$(psql "postgresql://${USER}:${PSWD}@postgres/${DB}" --command 'SELECT idx FROM public.item LIMIT 1' 2>&1 /dev/null)
+out=$(psql "postgresql://${USER}:${PSWD}@storage/${DB}" --command 'SELECT idx FROM public.item LIMIT 1' 2>&1 /dev/null)
 nok=$(echo "${out}" | grep 'does not exist')
 
 if [[ ${nok} ]]; then
-    psql "postgresql://${USER}:${PSWD}@postgres/${DB}" << EOF
+    psql "postgresql://${USER}:${PSWD}@storage/${DB}" << EOF
 
 CREATE TABLE public.item
 (

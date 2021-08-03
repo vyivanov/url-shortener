@@ -1,0 +1,6 @@
+diff --color -ru pistache_0.0.002.orig/debian/source/format pistache_0.0.002.new/debian/source/format
+--- pistache_0.0.002.orig/debian/source/format	2021-07-08 02:59:08.000000000 +0300
++++ pistache_0.0.002.new/debian/source/format	2021-08-01 05:45:40.114122570 +0300
+@@ -1 +1 @@
+-3.0 (quilt)
++3.0 (native)
