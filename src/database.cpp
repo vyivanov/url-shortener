@@ -20,7 +20,7 @@ std::string IDatabase::insert(const std::string& url, const std::string& ipc) {
     if (url.length() > MAX_URL_LENGTH) {
         throw long_url{"url is too long"};
     }
-    std::lock_guard<std::mutex> lg{m_mtx};
+    std::lock_guard lg{m_mtx};
     const uint64_t idx = do_insert(url, ipc);
     return m_key.encode(idx);
 }
@@ -34,7 +34,7 @@ std::string IDatabase::search(const std::string& key) {
             return idx.at(0);
         }
     }();
-    std::lock_guard<std::mutex> lg{m_mtx};
+    std::lock_guard lg{m_mtx};
     const std::string url = do_search(idx);
     return url;
 }

@@ -52,17 +52,12 @@ using Pistache::Http::ResponseWriter;
 using Pistache::Http::methodString;
 using Pistache::Http::Header::Location;
 using Pistache::Http::Header::ContentType;
+using Pistache::Http::Header::Raw;
 
 constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@storage/%3%)";
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https)://)";
 
 };
-
-#define ROUTE_LOG(request)                          \
-    PLOG_INFO << request.method()         << '\x20' \
-              << request.resource()       << '\x20' \
-              << request.query().as_str() << '\x20' \
-              << get_host(request)
 
 namespace Shortener {
 
@@ -92,7 +87,7 @@ void Application::serve() noexcept {
 }
 
 void Application::request_web(const Request& request, ResponseWriter response) {
-    ROUTE_LOG(request);
+    route_log(request);
     try {
         if (const auto url = get_url(request); url.has_value()) {
             const auto key = m_db->insert(url.value(), get_host(request));
@@ -113,7 +108,7 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_api(const Request& request, ResponseWriter response) {
-    ROUTE_LOG(request);
+    route_log(request);
     try {
         if (const auto url = get_url(request); url.has_value()) {
             const auto key = m_db->insert(url.value(), get_host(request));
@@ -131,7 +126,7 @@ void Application::request_api(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_key(const Request& request, ResponseWriter response) {
-    ROUTE_LOG(request);
+    route_log(request);
     try {
         const auto key = request.param(":key").as<std::string>();
         const auto url = m_db->search(key);
@@ -148,13 +143,13 @@ void Application::request_key(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_favicon(const Request& request, ResponseWriter response) {
-    ROUTE_LOG(request);
+    route_log(request);
     response.headers().add<ContentType>("image/x-icon");
     serveFile(response, "favicon.ico");
 }
 
 void Application::request_ping(const Request& request, ResponseWriter response) {
-    ROUTE_LOG(request);
+    route_log(request);
     if (m_db->ping()) {
         response.send(Code::Ok, "I'm alive!", MIME(Text, Plain));
     } else {
@@ -163,9 +158,17 @@ void Application::request_ping(const Request& request, ResponseWriter response) 
 }
 
 void Application::request_error(const Request& request, ResponseWriter response) {
-    ROUTE_LOG(request);
+    route_log(request);
     const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
     response.send(Code::Not_Found, out, MIME(Text, Html));
+}
+
+void Application::route_log(const Request& request) noexcept {
+    PLOG_INFO
+        << request.method()         << '\x20'
+        << request.resource()       << '\x20'
+        << request.query().as_str() << '\x20'
+        << get_host(request);
 }
 
 std::optional<std::string> Application::get_url(const Request& request) noexcept {
@@ -183,9 +186,9 @@ std::optional<std::string> Application::get_url(const Request& request) noexcept
 }
 
 std::string Application::get_host(const Request& request) noexcept {
-    const auto client = request.headers().tryGetRaw("X-Forwarded-For");
-    if (client.has_value()) {
-        return client.value().value();
+    const std::optional<Raw> host = request.headers().tryGetRaw("X-Real-IP");
+    if (host.has_value()) {
+        return host.value().value();
     }
     return request.address().host();
 }
