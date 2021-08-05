@@ -2,7 +2,9 @@
 
 #include <plog/Log.h>
 #include <pqxx/pqxx>
+
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <string>
 #include <vector>
@@ -40,7 +42,7 @@ uint64_t Postgres::do_insert(const std::string& url, const std::string& ipc) {
         const auto out = do_request(insert_url.str());
         return out.value().at("idx").c_str();
     }();
-    return std::stoi(idx);
+    return boost::lexical_cast<int>(idx);
 }
 
 std::string Postgres::do_search(const uint64_t idx) {

@@ -3,7 +3,7 @@
 ### Why do we need separate docker image?
 
 The project is deployed via [Portainer][1] which [does not support][2] relative file pathes. \
-Therefore, *proxy.conf* could not be copied to official container at docker-compose stage.
+Therefore, config files could not be copied to official container at docker-compose stage.
 
 **W/A**: to build custom image and to deploy it along with others as usual.
 
