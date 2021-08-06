@@ -40,7 +40,7 @@ private:
     void request_ping(const Request& request, ResponseWriter response);
     void request_error(const Request& request, ResponseWriter response);
 private:
-    static void route_log(const Request& request) noexcept;
+    static void log_route(const Request& request) noexcept;
     static std::optional<std::string> get_url(const Request& request) noexcept;
     static std::string get_host(const Request& request) noexcept;
     static std::string render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept;

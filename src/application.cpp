@@ -1,3 +1,4 @@
+#include "logger.h"
 #include "config.h"
 #include "application.h"
 #include "database.h"
@@ -8,9 +9,8 @@
 #include <pistache/endpoint.h>
 #include <pistache/http_defs.h>
 
-#include <plog/Log.h>
 #include <curl/curl.h>
-#include <boost/format.hpp>
+#include <fmt/core.h>
 #include <jinja2cpp/template.h>
 
 #include <regex>
@@ -54,7 +54,7 @@ using Pistache::Http::Header::Location;
 using Pistache::Http::Header::ContentType;
 using Pistache::Http::Header::Raw;
 
-constexpr const char* POSTGRES_CON_URI = R"(postgresql://%1%:%2%@storage/%3%)";
+constexpr const char* POSTGRES_CON_URI = R"(postgresql://{}:{}@storage/{})";
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https)://)";
 
 };
@@ -63,10 +63,10 @@ namespace Shortener {
 
 Application::Application(const cfg_db& db, const uint16_t port) noexcept
 : m_db(std::make_unique<Postgres>(
-    (boost::format{POSTGRES_CON_URI} %
-        db.user %
-        db.pswd %
-        db.name).str(),
+    fmt::format(POSTGRES_CON_URI,
+        db.user,
+        db.pswd,
+        db.name),
     db.salt))
 , m_port(Pistache::Port{port}) {
     Get(m_router, "/"               , bind(&Application::request_web    , this));
@@ -87,7 +87,7 @@ void Application::serve() noexcept {
 }
 
 void Application::request_web(const Request& request, ResponseWriter response) {
-    route_log(request);
+    log_route(request);
     try {
         if (const auto url = get_url(request); url.has_value()) {
             const auto key = m_db->insert(url.value(), get_host(request));
@@ -108,12 +108,12 @@ void Application::request_web(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_api(const Request& request, ResponseWriter response) {
-    route_log(request);
+    log_route(request);
     try {
         if (const auto url = get_url(request); url.has_value()) {
             const auto key = m_db->insert(url.value(), get_host(request));
-            const auto out = boost::format{"%1%/%2%"} % APP_NAME % key;
-            response.send(Code::Ok, out.str(), MIME(Text, Plain));
+            const auto out = fmt::format("{}/{}", APP_NAME, key);
+            response.send(Code::Ok, out, MIME(Text, Plain));
         } else {
             const auto out = render_template("html/api.html.in", {{"root", APP_NAME}});
             response.send(Code::Ok, out, MIME(Text, Html));
@@ -126,7 +126,7 @@ void Application::request_api(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_key(const Request& request, ResponseWriter response) {
-    route_log(request);
+    log_route(request);
     try {
         const auto key = request.param(":key").as<std::string>();
         const auto url = m_db->search(key);
@@ -143,13 +143,13 @@ void Application::request_key(const Request& request, ResponseWriter response) {
 }
 
 void Application::request_favicon(const Request& request, ResponseWriter response) {
-    route_log(request);
+    log_route(request);
     response.headers().add<ContentType>("image/x-icon");
     serveFile(response, "favicon.ico");
 }
 
 void Application::request_ping(const Request& request, ResponseWriter response) {
-    route_log(request);
+    log_route(request);
     if (m_db->ping()) {
         response.send(Code::Ok, "I'm alive!", MIME(Text, Plain));
     } else {
@@ -158,17 +158,13 @@ void Application::request_ping(const Request& request, ResponseWriter response) 
 }
 
 void Application::request_error(const Request& request, ResponseWriter response) {
-    route_log(request);
+    log_route(request);
     const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
     response.send(Code::Not_Found, out, MIME(Text, Html));
 }
 
-void Application::route_log(const Request& request) noexcept {
-    PLOG_INFO
-        << request.method()         << '\x20'
-        << request.resource()       << '\x20'
-        << request.query().as_str() << '\x20'
-        << get_host(request);
+void Application::log_route(const Request& request) noexcept {
+    LOG_INFO("GET {}{} from {}", request.resource(), request.query().as_str(), get_host(request));
 }
 
 std::optional<std::string> Application::get_url(const Request& request) noexcept {
@@ -179,7 +175,7 @@ std::optional<std::string> Application::get_url(const Request& request) noexcept
         if (std::regex_search(out_url, std::regex{REGEXP_VALID_URL})) {
             return out_url;
         } else {
-            return (boost::format{"http://%1%"} % out_url).str();
+            return fmt::format("http://{}", out_url);
         }
     }
     return std::nullopt;
