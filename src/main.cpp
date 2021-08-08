@@ -1,27 +1,16 @@
+#include "logger.h"
 #include "application.h"
 
-#include <plog/Log.h>
-#include <plog/Appenders/ColorConsoleAppender.h>
-#include <plog/Appenders/RollingFileAppender.h>
-
-#include <boost/format.hpp>
-
 #include <cstdlib>
-#include <exception>
+#include <cerrno>
 
 namespace {
 
-constexpr uint64_t LOG_FILE_SIZE = 10 * 1024 * 1024;
-constexpr uint64_t LOG_FILE_NUMS = 10;
-constexpr uint16_t APP_PORT      = 9080;
+constexpr uint16_t APP_PORT = 9080;
 
 };
 
-int main(int argc, const char** argv) {
-    plog::ColorConsoleAppender<plog::TxtFormatterUtcTime> log_to_console;
-    plog::RollingFileAppender <plog::TxtFormatterUtcTime> log_to_file(
-        (boost::format{"%1%.log"} % argv[0]).str().c_str(), LOG_FILE_SIZE, LOG_FILE_NUMS);
-    plog::init(plog::debug).addAppender(&log_to_console).addAppender(&log_to_file);
+int main() {
     const char* const db_user = std::getenv("POSTGRES_USER");
     const char* const db_pswd = std::getenv("POSTGRES_PASSWORD");
     const char* const db_name = std::getenv("POSTGRES_DB");
@@ -30,10 +19,10 @@ int main(int argc, const char** argv) {
             db_pswd == nullptr ||
                 db_name == nullptr ||
                     db_salt == nullptr) {
-        PLOG_FATAL << "bad database config";
-        throw std::runtime_error{"bad database config"};
+        LOG_CRITICAL("bad database config");
+        return -EINVAL;
     }
-    PLOG_INFO.printf("starting service on %u (http) port...", APP_PORT);
+    LOG_INFO("starting service on {} (http) port...", APP_PORT);
     Shortener::Application {
         Shortener::Application::cfg_db {
             .user = db_user,

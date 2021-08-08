@@ -55,11 +55,12 @@ target_link_libraries(xkcd_test PRIVATE libshared)
 ### APP ###
 
 add_executable(${PROJECT_NAME}
+    src/logger.cpp
     src/main.cpp
     src/application.cpp
     src/postgres.cpp
     src/database.cpp)
 
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -std=c++17)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wswitch-enum -Wunreachable-code -std=c++17)
 target_include_directories(${PROJECT_NAME} PRIVATE include/)
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS} pistache.a hashids.a libstatic)

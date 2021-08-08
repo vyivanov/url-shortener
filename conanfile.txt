@@ -3,7 +3,7 @@ boost/1.76.0
 libpqxx/7.5.2
 jinja2cpp/1.1.0
 libcurl/7.77.0
-plog/1.1.5
+spdlog/1.6.1
 
 [generators]
 cmake
