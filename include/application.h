@@ -3,18 +3,12 @@
 #include "database.h"
 
 #include <pistache/router.h>
+#include <pistache/endpoint.h>
 #include <jinja2cpp/template.h>
 
 #include <string>
 #include <optional>
 #include <memory>
-
-namespace {
-
-using Pistache::Rest::Request;
-using Pistache::Http::ResponseWriter;
-
-};
 
 namespace Shortener {
 
@@ -31,23 +25,23 @@ public:
     Application(Application&& other) = delete;
     Application& operator=(const Application& other) = delete;
     Application& operator=(Application&& other) = delete;
-    void serve() noexcept;
+    void start() noexcept;
+    void stop () noexcept;
 private:
-    void request_web(const Request& request, ResponseWriter response);
-    void request_api(const Request& request, ResponseWriter response);
-    void request_key(const Request& request, ResponseWriter response);
-    void request_favicon(const Request& request, ResponseWriter response);
-    void request_ping(const Request& request, ResponseWriter response);
-    void request_error(const Request& request, ResponseWriter response);
+    void route_web    (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
+    void route_api    (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
+    void route_key    (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
+    void route_favicon(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
+    void route_ping   (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
+    void route_error  (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 private:
-    static void log_route(const Request& request) noexcept;
-    static std::optional<std::string> get_url(const Request& request) noexcept;
-    static std::string get_host(const Request& request) noexcept;
+    static void log(const Pistache::Rest::Request& request) noexcept;
+    static std::optional<std::string> get_url(const Pistache::Rest::Request& request) noexcept;
+    static std::string get_host(const Pistache::Rest::Request& request) noexcept;
     static std::string render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept;
 private:
-    Pistache::Rest::Router           m_router;
-    const std::unique_ptr<IDatabase> m_db;
-    const Pistache::Port             m_port;
+    const std::unique_ptr<IDatabase>                m_db;
+    const std::unique_ptr<Pistache::Http::Endpoint> m_ep;
 };
 
 };

@@ -1,10 +1,32 @@
 #include "logger.h"
 #include "application.h"
 
+#include <signal.h>
+
 #include <cstdlib>
 #include <cerrno>
 
 namespace {
+
+class Signals final {
+public:
+    Signals() noexcept {
+        m_signum          = 0;
+        m_sigact.sa_flags = 0;
+        ::sigemptyset(&m_sigact.sa_mask);
+        ::sigaddset(&m_sigact.sa_mask , SIGINT );
+        ::sigaddset(&m_sigact.sa_mask , SIGTERM);
+        ::sigaction(SIGINT , &m_sigact, nullptr);
+        ::sigaction(SIGTERM, &m_sigact, nullptr);
+    }
+    void wait() noexcept {
+        ::sigwait(&m_sigact.sa_mask, &m_signum);
+    }
+private:
+    using sigact_t = struct sigaction;
+    int      m_signum;
+    sigact_t m_sigact;
+};
 
 constexpr uint16_t APP_PORT = 9080;
 
@@ -22,8 +44,7 @@ int main() {
         LOG_CRITICAL("bad database config");
         return -EINVAL;
     }
-    LOG_INFO("starting service on {} (http) port...", APP_PORT);
-    Shortener::Application {
+    Shortener::Application app {
         Shortener::Application::cfg_db {
             .user = db_user,
             .pswd = db_pswd,
@@ -31,5 +52,10 @@ int main() {
             .salt = db_salt,
         },
         APP_PORT
-    }.serve();
+    };
+    app.start();
+    LOG_INFO("service started on {} (http) port", APP_PORT);
+    Signals{}.wait();
+    app.stop();
+    LOG_INFO("service gracefully stopped");
 }
