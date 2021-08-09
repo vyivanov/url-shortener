@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include <utility>
+#include <filesystem>
 #include <memory>
 
 namespace Shortener {
@@ -28,7 +29,7 @@ public:
         m_logger->critical(fmt, std::forward<Args>(args)...);
     }
 private:
-    explicit Logger(const char* file) noexcept;
+    explicit Logger(const std::filesystem::path& file) noexcept;
     Logger(const Logger& other) = delete;
     Logger(Logger&& other) = delete;
     Logger& operator=(const Logger& other) = delete;
@@ -36,7 +37,7 @@ private:
    ~Logger() = default;
 private:
     using  logger_t = std::shared_ptr<spdlog::logger>;
-    static logger_t init(const char* file) noexcept;
+    static logger_t init(const std::filesystem::path& file) noexcept;
 private:
     const logger_t m_logger;
 };

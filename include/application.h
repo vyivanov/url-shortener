@@ -8,6 +8,7 @@
 
 #include <string>
 #include <optional>
+#include <filesystem>
 #include <memory>
 
 namespace Shortener {
@@ -38,7 +39,7 @@ private:
     static void log(const Pistache::Rest::Request& request) noexcept;
     static std::optional<std::string> get_url(const Pistache::Rest::Request& request) noexcept;
     static std::string get_host(const Pistache::Rest::Request& request) noexcept;
-    static std::string render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept;
+    static std::string render_template(const std::filesystem::path& file, const jinja2::ValuesMap& attr) noexcept;
 private:
     const std::unique_ptr<IDatabase>                m_db;
     const std::unique_ptr<Pistache::Http::Endpoint> m_ep;

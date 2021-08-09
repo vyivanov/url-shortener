@@ -5,6 +5,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
+#include <filesystem>
 #include <thread>
 #include <memory>
 #include <vector>
@@ -27,11 +28,11 @@ Logger& Logger::instance() noexcept {
     return obj;
 }
 
-Logger::Logger(const char* const file) noexcept: m_logger(init(file)) {
+Logger::Logger(const std::filesystem::path& file) noexcept: m_logger(init(file)) {
 
 }
 
-Logger::logger_t Logger::init(const char* const file) noexcept {
+Logger::logger_t Logger::init(const std::filesystem::path& file) noexcept {
     spdlog::init_thread_pool(LOG_QUEUE_SIZE, std::thread::hardware_concurrency());
     auto log_to_stdout = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     auto log_to_file   = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(file, LOG_FILE_SIZE, LOG_FILE_NUMS);

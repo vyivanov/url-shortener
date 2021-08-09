@@ -1,11 +1,13 @@
 FROM ubuntu:20.04 AS build
 
-ENV DEBIAN_FRONTEND=noninteractive
 COPY ./ /opt/url-shortener
 
 RUN \
-    apt update && apt install -y \
+    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
          wget                    \
+         git                     \
+         unzip                   \
+         lintian                 \
          build-essential         \
          cmake                   \
          devscripts              \
@@ -52,7 +54,6 @@ RUN \
 
 FROM ubuntu:20.04 AS deploy
 
-ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /var/www
 
 COPY --from=build /opt/url-shortener/build-in-docker/bin/url-shortener ./
@@ -61,8 +62,10 @@ COPY --from=build /opt/url-shortener/img/favicon.ico ./
 COPY --from=build /opt/url-shortener/html ./html
 
 RUN \
-    apt update && apt install -y postgresql-client \
+    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+         postgresql-client \
     \
+ && apt-get clean               \
  && rm -rf /var/lib/apt/lists/* \
     \
  && chmod +x entrypoint.sh
