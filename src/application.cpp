@@ -19,6 +19,7 @@
 #include <optional>
 #include <cstdio>
 #include <memory>
+#include <filesystem>
 
 namespace {
 
@@ -177,7 +178,7 @@ std::string Application::get_host(const Pistache::Rest::Request& request) noexce
     return request.address().host();
 }
 
-std::string Application::render_template(const std::string& file, const jinja2::ValuesMap& attr) noexcept {
+std::string Application::render_template(const std::filesystem::path& file, const jinja2::ValuesMap& attr) noexcept {
     auto tmpl = jinja2::Template{};
     tmpl.LoadFromFile(file);
     return tmpl.RenderAsString(attr).value();
