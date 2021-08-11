@@ -3,28 +3,30 @@ FROM ubuntu:20.04 AS build
 COPY ./ /opt/url-shortener
 
 RUN \
-    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-         wget                    \
-         git                     \
-         unzip                   \
-         lintian                 \
-         build-essential         \
-         cmake                   \
-         devscripts              \
-         debhelper               \
-         python3                 \
-         python3-pip             \
-         meson                   \
-         cppcheck                \
-         dh-exec                 \
-         libcurl4-openssl-dev    \
-         libgtest-dev            \
-         libssl-dev              \
-         pkg-config              \
-         rapidjson-dev           \
-         valgrind                \
-         patch                   \
- && pip3 install conan           \
+    apt-get update                             \
+ && DEBIAN_FRONTEND=noninteractive             \
+    apt-get install -y --no-install-recommends \
+        wget                                   \
+        git                                    \
+        unzip                                  \
+        lintian                                \
+        build-essential                        \
+        cmake                                  \
+        devscripts                             \
+        debhelper                              \
+        python3                                \
+        python3-pip                            \
+        meson                                  \
+        cppcheck                               \
+        dh-exec                                \
+        libcurl4-openssl-dev                   \
+        libgtest-dev                           \
+        libssl-dev                             \
+        pkg-config                             \
+        rapidjson-dev                          \
+        valgrind                               \
+        patch                                  \
+ && pip3 install conan                         \
     \
  && conan profile new --detect default                                \
  && conan profile update settings.compiler.libcxx=libstdc++11 default \
@@ -62,8 +64,11 @@ COPY --from=build /opt/url-shortener/img/favicon.ico ./
 COPY --from=build /opt/url-shortener/html ./html
 
 RUN \
-    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-         postgresql-client \
+    apt-get update                             \
+ && DEBIAN_FRONTEND=noninteractive             \
+    apt-get install -y --no-install-recommends \
+        wait-for-it                            \
+        postgresql-client                      \
     \
  && apt-get clean               \
  && rm -rf /var/lib/apt/lists/* \
