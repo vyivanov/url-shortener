@@ -9,11 +9,15 @@ if [ -z "${USER}" ] || [ -z "${PSWD}" ] || [ -z "${DB}" ]; then
     exit 42
 fi
 
-out=$(psql "postgresql://${USER}:${PSWD}@storage/${DB}" --command 'SELECT idx FROM public.item LIMIT 1' 2>&1 /dev/null)
+readonly EP="postgresql://${USER}:${PSWD}@storage:5432/${DB}"
+
+out=$(wait-for-it storage:5432 --timeout=60 --quiet -- \
+    psql "${EP}" --command 'SELECT * FROM public.item LIMIT 1' 2>&1 /dev/null)
+
 nok=$(echo "${out}" | grep 'does not exist')
 
 if [[ ${nok} ]]; then
-    psql "postgresql://${USER}:${PSWD}@storage/${DB}" << EOF
+    psql "${EP}" << EOF
 
 CREATE TABLE public.item
 (
