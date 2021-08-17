@@ -3,7 +3,8 @@
 #include "application.h"
 #include "database.h"
 #include "postgres.h"
-#include "xkcd/xkcdxx.h"
+
+#include <xkcdxx.h>
 
 #include <pistache/router.h>
 #include <pistache/endpoint.h>
@@ -83,8 +84,8 @@ void Application::route_web(const Pistache::Rest::Request& request, Pistache::Ht
             const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
             response.send(Pistache::Http::Code::Ok, out, MIME(Text, Html));
         } else {
-            const auto [x, y, img, z, msg] = xkcdxx::Comic(xkcdxx::Comic::Number::Random).info();
-            const auto out = render_template("html/web.html.in", {{"root", APP_NAME}, {"ver", APP_SEMVER}, {"img", img}, {"msg", msg}});
+            const auto img = xkcdxx::Comic{xkcdxx::Comic::Number::Random};
+            const auto out = render_template("html/web.html.in", {{"root", APP_NAME}, {"ver", APP_SEMVER}, {"img", img.url()}, {"msg", img.alt()}});
             response.send(Pistache::Http::Code::Ok, out, MIME(Text, Html));
         }
     } catch (const IDatabase::long_url& ex) {

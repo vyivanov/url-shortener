@@ -2,7 +2,9 @@
 #include "application.h"
 
 #include <signal.h>
+#include <string.h>
 
+#include <string>
 #include <cstdlib>
 #include <cerrno>
 
@@ -15,12 +17,15 @@ public:
         m_sigact.sa_flags = 0;
         ::sigemptyset(&m_sigact.sa_mask);
         ::sigaddset(&m_sigact.sa_mask , SIGINT );
+        ::sigaddset(&m_sigact.sa_mask , SIGQUIT);
         ::sigaddset(&m_sigact.sa_mask , SIGTERM);
         ::sigaction(SIGINT , &m_sigact, nullptr);
+        ::sigaction(SIGQUIT, &m_sigact, nullptr);
         ::sigaction(SIGTERM, &m_sigact, nullptr);
     }
-    void wait() noexcept {
+    std::string wait() noexcept {
         ::sigwait(&m_sigact.sa_mask, &m_signum);
+        return ::strsignal(m_signum);
     }
 private:
     using sigact_t = struct sigaction;
@@ -55,7 +60,7 @@ int main() {
     };
     app.start();
     LOG_INFO("service started on {} (http) port", APP_PORT);
-    Signals{}.wait();
+    const auto sig = Signals{}.wait();
     app.stop();
-    LOG_INFO("service gracefully stopped");
+    LOG_INFO("service gracefully stopped due to '{}' signal", sig);
 }
