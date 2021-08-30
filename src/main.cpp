@@ -35,7 +35,7 @@ private:
 
 constexpr uint16_t APP_PORT = 9080;
 
-};
+}
 
 int main() {
     const char* const db_user = std::getenv("POSTGRES_USER");

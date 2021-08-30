@@ -16,7 +16,7 @@ constexpr const char* TMPL_INSERT_URL = "INSERT INTO public.item (url, ipc) VALU
 constexpr const char* TMPL_SEARCH_IDX = "SELECT url FROM public.item WHERE idx = {}";
 constexpr const char* TMPL_UPDATE_CNT = "UPDATE public.item SET cnt = cnt + 1 WHERE idx = {}";
 
-};
+}
 
 namespace Shortener {
 
@@ -66,4 +66,4 @@ std::optional<pqxx::row> Postgres::do_request(const std::string& sql) {
     }
 }
 
-};
+}

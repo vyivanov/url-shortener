@@ -26,4 +26,4 @@ private:
     const std::string m_uri;
 };
 
-};
+}

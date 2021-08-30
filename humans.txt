@@ -1,0 +1,8 @@
+/* TEAM */
+Creator: Vladimir Yu. Ivanov
+Site: https://www.vova-ivanov.info
+Mail: inbox@vova-ivanov.info
+Location: Moscow, Russian Federation
+
+/* THANKS */
+To all that guys who makes open source stuff...

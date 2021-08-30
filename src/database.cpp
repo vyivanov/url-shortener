@@ -8,7 +8,7 @@ namespace {
 
 constexpr uint16_t MAX_URL_LENGTH = 1'024UL;
 
-};
+}
 
 namespace Shortener {
 
@@ -40,4 +40,4 @@ std::string IDatabase::search(const std::string& key) {
     return url;
 }
 
-};
+}

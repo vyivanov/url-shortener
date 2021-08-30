@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(url-shortener)
+cmake_minimum_required(VERSION 3.16.0)
+project(url-shortener LANGUAGES CXX)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
@@ -23,6 +23,18 @@ add_executable(${PROJECT_NAME}
     src/postgres.cpp
     src/database.cpp)
 
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wswitch-enum -Wunreachable-code -std=c++17)
+set(COMPILE_OPTIONS
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wswitch-enum
+    -Wunreachable-code
+    -Wunused
+    -pipe
+    -Ofast
+    -std=c++2a)
+
+target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
 target_include_directories(${PROJECT_NAME} PRIVATE include/)
+target_link_options(${PROJECT_NAME} PRIVATE "-s")
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS} pistache.a hashids.a xkcdxx.a)

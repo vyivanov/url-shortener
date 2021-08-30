@@ -29,7 +29,7 @@ RUN \
  && pip3 install conan             \
     \
  && add-apt-repository --yes --update ppa:vyivanov/xkcdxx \
- && apt install --yes xkcdxx=0.0.2~ubuntu20.04            \
+ && apt install --yes xkcdxx=0.0.10~ubuntu20.04           \
     \
  && conan profile new --detect default                                \
  && conan profile update settings.compiler.libcxx=libstdc++11 default \
@@ -63,6 +63,7 @@ WORKDIR /var/www
 
 COPY --from=build /opt/url-shortener/build-in-docker/bin/url-shortener ./
 COPY --from=build /opt/url-shortener/entrypoint.sh ./
+COPY --from=build /opt/url-shortener/humans.txt ./
 COPY --from=build /opt/url-shortener/img/favicon.ico ./
 COPY --from=build /opt/url-shortener/html ./html
 
