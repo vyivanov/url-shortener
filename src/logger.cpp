@@ -19,7 +19,7 @@ constexpr uint64_t LOG_FILE_NUMS  = (10);
 constexpr const char* LOG_NAME    = "logger";
 constexpr const char* LOG_PATTERN = "[%Y-%m-%d %I:%M:%S %p] [%^%l%$] %v (thr-%t)";
 
-};
+}
 
 namespace Shortener {
 
@@ -47,4 +47,4 @@ Logger::logger_t Logger::init(const std::filesystem::path& file) noexcept {
     return logger;
 }
 
-};
+}

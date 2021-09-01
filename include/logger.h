@@ -42,7 +42,7 @@ private:
     const logger_t m_logger;
 };
 
-};
+}
 
 template<typename... Args>
 inline void LOG_INFO(const char* const fmt, Args&&... args) noexcept {

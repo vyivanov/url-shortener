@@ -46,7 +46,7 @@ private:
 constexpr const char* POSTGRES_CON_URI = R"(postgresql://{}:{}@storage/{})";
 constexpr const char* REGEXP_VALID_URL = R"(^(http|https)://)";
 
-};
+}
 
 namespace Shortener {
 
@@ -62,6 +62,7 @@ Application::Application(const cfg_db& db, const uint16_t port) noexcept
     Pistache::Rest::Routes::Get(routes, "/api"        , Pistache::Rest::Routes::bind(&Application::route_api    , this));
     Pistache::Rest::Routes::Get(routes, "/:key"       , Pistache::Rest::Routes::bind(&Application::route_key    , this));
     Pistache::Rest::Routes::Get(routes, "/favicon.ico", Pistache::Rest::Routes::bind(&Application::route_favicon, this));
+    Pistache::Rest::Routes::Get(routes, "/humans.txt" , Pistache::Rest::Routes::bind(&Application::route_humans , this));
     Pistache::Rest::Routes::Get(routes, "/api/ping"   , Pistache::Rest::Routes::bind(&Application::route_ping   , this));
     Pistache::Rest::Routes::NotFound(routes           , Pistache::Rest::Routes::bind(&Application::route_error  , this));
     m_ep->init(Pistache::Http::Endpoint::options().threads(std::thread::hardware_concurrency() << 1));
@@ -81,18 +82,18 @@ void Application::route_web(const Pistache::Rest::Request& request, Pistache::Ht
     try {
         if (const auto url = get_url(request); url.has_value()) {
             const auto key = m_db->insert(url.value(), get_host(request));
-            const auto out = render_template("html/key.html.in", {{"root", APP_NAME}, {"key", key}});
+            const auto out = render_template("html/key.html.j2", {{"root", APP_NAME}, {"key", key}});
             response.send(Pistache::Http::Code::Ok, out, MIME(Text, Html));
         } else {
             const auto img = xkcdxx::Comic{xkcdxx::Comic::Number::Random};
-            const auto out = render_template("html/web.html.in", {{"root", APP_NAME}, {"ver", APP_SEMVER}, {"img", img.url()}, {"msg", img.alt()}});
+            const auto out = render_template("html/web.html.j2", {{"root", APP_NAME}, {"ver", APP_SEMVER}, {"img", img.url()}, {"msg", img.alt()}});
             response.send(Pistache::Http::Code::Ok, out, MIME(Text, Html));
         }
     } catch (const IDatabase::long_url& ex) {
-        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "url is too long"}});
+        const auto out = render_template("html/err.html.j2", {{"root", APP_NAME}, {"msg", "url is too long"}});
         response.send(Pistache::Http::Code::RequestURI_Too_Long, out, MIME(Text, Html));
     } catch (const std::exception& ex) {
-        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", ex.what()}});
+        const auto out = render_template("html/err.html.j2", {{"root", APP_NAME}, {"msg", ex.what()}});
         response.send(Pistache::Http::Code::Internal_Server_Error, out, MIME(Text, Html));
     }
 }
@@ -105,7 +106,7 @@ void Application::route_api(const Pistache::Rest::Request& request, Pistache::Ht
             const auto out = fmt::format("{}/{}", APP_NAME, key);
             response.send(Pistache::Http::Code::Ok, out, MIME(Text, Plain));
         } else {
-            const auto out = render_template("html/api.html.in", {{"root", APP_NAME}});
+            const auto out = render_template("html/api.html.j2", {{"root", APP_NAME}});
             response.send(Pistache::Http::Code::Ok, out, MIME(Text, Html));
         }
     } catch (const IDatabase::long_url& ex) {
@@ -120,14 +121,14 @@ void Application::route_key(const Pistache::Rest::Request& request, Pistache::Ht
     try {
         const auto key = request.param(":key").as<std::string>();
         const auto url = m_db->search(key);
-        const auto out = render_template("html/url.html.in", {{"root", APP_NAME}, {"url", url}});
+        const auto out = render_template("html/url.html.j2", {{"root", APP_NAME}, {"url", url}});
         response.headers().add<Pistache::Http::Header::Location>(url);
         response.send(Pistache::Http::Code::Found, out, MIME(Text, Html));
     } catch (const IDatabase::undefined_key& ex) {
-        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
+        const auto out = render_template("html/err.html.j2", {{"root", APP_NAME}, {"msg", "resource not found"}});
         response.send(Pistache::Http::Code::Not_Found, out, MIME(Text, Html));
     } catch (const std::exception& ex) {
-        const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", ex.what()}});
+        const auto out = render_template("html/err.html.j2", {{"root", APP_NAME}, {"msg", ex.what()}});
         response.send(Pistache::Http::Code::Internal_Server_Error, out, MIME(Text, Html));
     }
 }
@@ -136,6 +137,11 @@ void Application::route_favicon(const Pistache::Rest::Request& request, Pistache
     log(request);
     response.headers().add<Pistache::Http::Header::ContentType>("image/x-icon");
     Pistache::Http::serveFile(response, "favicon.ico");
+}
+
+void Application::route_humans(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
+    log(request);
+    Pistache::Http::serveFile(response, "humans.txt", MIME(Text, Plain));
 }
 
 void Application::route_ping(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
@@ -149,7 +155,7 @@ void Application::route_ping(const Pistache::Rest::Request& request, Pistache::H
 
 void Application::route_error(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response) {
     log(request);
-    const auto out = render_template("html/err.html.in", {{"root", APP_NAME}, {"msg", "resource not found"}});
+    const auto out = render_template("html/err.html.j2", {{"root", APP_NAME}, {"msg", "resource not found"}});
     response.send(Pistache::Http::Code::Not_Found, out, MIME(Text, Html));
 }
 
@@ -185,4 +191,4 @@ std::string Application::render_template(const std::filesystem::path& file, cons
     return tmpl.RenderAsString(attr).value();
 }
 
-};
+}

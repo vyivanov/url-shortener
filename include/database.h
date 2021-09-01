@@ -31,4 +31,4 @@ private:
     hashidsxx::Hashids const m_key;
 };
 
-};
+}

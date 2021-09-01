@@ -33,6 +33,7 @@ private:
     void route_api    (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
     void route_key    (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
     void route_favicon(const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
+    void route_humans (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
     void route_ping   (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
     void route_error  (const Pistache::Rest::Request& request, Pistache::Http::ResponseWriter response);
 private:
@@ -45,4 +46,4 @@ private:
     const std::unique_ptr<Pistache::Http::Endpoint> m_ep;
 };
 
-};
+}
