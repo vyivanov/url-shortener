@@ -1,0 +1,37 @@
+@startuml
+
+cloud internet
+
+rectangle host {
+    rectangle docker {
+        node proxy [
+            proxy:80,443,5000
+        ]
+        node adminer [
+            adminer:8080
+        ]
+        node application [
+            application:9080
+        ]
+        node storage [
+            storage:5432
+        ]
+    }
+    database certbot [
+        certs
+    ]
+    database postgres [
+        data
+    ]
+}
+
+internet    <|==|> proxy     : http(s)
+proxy       <==> adminer     : network_a
+proxy       <==> application : network_b
+adminer     <==> storage     : network_c
+application <==> storage     : network_d
+
+proxy   <.> certbot  : volume
+storage <.> postgres : volume
+
+@enduml

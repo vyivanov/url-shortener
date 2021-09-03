@@ -4,3 +4,6 @@
 ![uptime for 30 days](https://img.shields.io/uptimerobot/ratio/30/m789069294-5d3dd102dd21c1016b49f7e1)
 ![docker image latest tag](https://img.shields.io/docker/v/vyivanov/url-shortener?label=image%20tag)
 ![Docker image latest size](https://img.shields.io/docker/image-size/vyivanov/url-shortener?label=image%20size)
+
+![](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/vyivanov/url-shortener/0.0.28/docs/deployment.puml)
+
