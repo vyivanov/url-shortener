@@ -21,7 +21,7 @@ services:
       - front_adminer
     restart: always
   application:
-    image: vyivanov/url-shortener:0.0.27
+    image: vyivanov/url-shortener:0.0.28
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
